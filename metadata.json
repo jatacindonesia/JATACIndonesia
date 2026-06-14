@@ -1,0 +1,6 @@
+{
+  "name": "John Andersen Training",
+  "description": "Portofolio interaktif dan Learning Management System (LMS) untuk JATC Indonesia, mendalami 16 English Tenses, 5 contemporary methodologies, tata bahasa logis, beserta kontrol admin penuh.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
