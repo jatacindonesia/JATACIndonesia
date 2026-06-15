@@ -286,7 +286,7 @@ export default function TensesHub() {
                       <option value="I">I (Saya)</option>
                       <option value="He">He (Dia L)</option>
                       <option value="She">She (Dia P)</option>
-                      <option value="The students">The students (Siswa)</option>
+                      <option value="The students">The students (Pembelajaran)</option>
                       <option value="Drs. Eddy">Drs. Eddy</option>
                       <option value="We">We (Kami)</option>
                     </select>

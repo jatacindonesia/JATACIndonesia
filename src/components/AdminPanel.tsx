@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { SiteConfig, Member, LearningSession, Article, GalleryItem, LMSModule } from '../types';
+import React, { useState, useEffect } from 'react';
+import { SiteConfig, Member, LearningSession, Article, GalleryItem, LMSModule, TargetParticipantConfig, JatcHistoryItem } from '../types';
 import {
-  Settings, Users, Calendar, BookOpen, VolumeX, CheckCircle, XCircle, Trash2, Edit3, Plus,
-  Save, RefreshCw, LogOut, Lock, Download, Printer, Layers, Info, Check, Image
+  Settings, Users, Calendar, BookOpen, VolumeX, CheckCircle, XCircle, Trash2, Edit3, Plus, X,
+  Save, RefreshCw, LogOut, Lock, Download, Printer, Layers, Info, Check, Image, Video,
+  Globe, Briefcase, Sparkles, GraduationCap, Heart, Bookmark, Activity, HelpCircle,
+  Sliders, Eye, Building
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -53,11 +55,71 @@ export default function AdminPanel({
   const [subtitle, setSubtitle] = useState(siteConfig.hero.subtitle);
   const [trainerName, setTrainerName] = useState(siteConfig.hero.trainerName);
   const [trainerTitle, setTrainerTitle] = useState(siteConfig.hero.trainerTitle);
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState(siteConfig.hero.backgroundImageUrl || '');
+  const [backgroundImageUrl2, setBackgroundImageUrl2] = useState(siteConfig.hero.backgroundImageUrl2 || '');
+  const [backgroundImageUrl3, setBackgroundImageUrl3] = useState(siteConfig.hero.backgroundImageUrl3 || '');
+  const [backgroundImageUrl4, setBackgroundImageUrl4] = useState(siteConfig.hero.backgroundImageUrl4 || '');
   const [profileText, setProfileText] = useState(siteConfig.about.profile);
   const [visionText, setVisionText] = useState(siteConfig.about.vision);
   const [officeAddress, setOfficeAddress] = useState(siteConfig.contact.officeAddress);
   const [whatsappNumber, setWhatsappNumber] = useState(siteConfig.contact.whatsappNumber);
   const [operationalHours, setOperationalHours] = useState(siteConfig.contact.operationalHours);
+
+  const [webinarSeriesTitle, setWebinarSeriesTitle] = useState(siteConfig.hero.webinarSeriesTitle || '');
+  const [webinarDuration, setWebinarDuration] = useState(siteConfig.hero.webinarDuration || '');
+  const [certificateNote, setCertificateNote] = useState(siteConfig.hero.certificateNote || '');
+  const [webinarParts, setWebinarParts] = useState(siteConfig.hero.webinarParts || []);
+
+  const [importanceReasons, setImportanceReasons] = useState(siteConfig.importanceReasons || []);
+  const [failureReasons, setFailureReasons] = useState(siteConfig.failureReasons || []);
+  const [learningGoals, setLearningGoals] = useState(siteConfig.learningGoals || []);
+  const [methodologies, setMethodologies] = useState(siteConfig.methodologies || []);
+  const [showLmsAndLive, setShowLmsAndLive] = useState(siteConfig.showLmsAndLive ?? true);
+  const [targetParticipants, setTargetParticipants] = useState(siteConfig.targetParticipants || []);
+  const [institutions, setInstitutions] = useState(siteConfig.institutions || []);
+
+  const [historyList, setHistoryList] = useState<JatcHistoryItem[]>(siteConfig.about.history || []);
+  const [newHistTitle, setNewHistTitle] = useState('');
+  const [newHistYear, setNewHistYear] = useState('');
+  const [newHistDesc, setNewHistDesc] = useState('');
+  const [newHistImg, setNewHistImg] = useState('');
+
+  // Sync state if siteConfig changes (especially on reset to defaults)
+  useEffect(() => {
+    setCompanyName(siteConfig.hero.companyName);
+    setTagline(siteConfig.hero.tagline);
+    setSubtitle(siteConfig.hero.subtitle);
+    setTrainerName(siteConfig.hero.trainerName);
+    setTrainerTitle(siteConfig.hero.trainerTitle);
+    setBackgroundImageUrl(siteConfig.hero.backgroundImageUrl || '');
+    setBackgroundImageUrl2(siteConfig.hero.backgroundImageUrl2 || '');
+    setBackgroundImageUrl3(siteConfig.hero.backgroundImageUrl3 || '');
+    setBackgroundImageUrl4(siteConfig.hero.backgroundImageUrl4 || '');
+    setProfileText(siteConfig.about.profile);
+    setVisionText(siteConfig.about.vision);
+    setOfficeAddress(siteConfig.contact.officeAddress);
+    setWhatsappNumber(siteConfig.contact.whatsappNumber);
+    setOperationalHours(siteConfig.contact.operationalHours);
+    setCertSignName(siteConfig.certificate?.signatureName || 'Drs. Eddy Sudarmadji MM.,MBA');
+    setCertSignRole(siteConfig.certificate?.signatureRole || 'Lead Master Trainer & Founder JATC');
+    setCertBgStyle(siteConfig.certificate?.backgroundStyle || 'abstract-soft');
+    setCertLogoUrl(siteConfig.certificate?.logoUrl || '');
+    setCertRightLogoUrl(siteConfig.certificate?.rightLogoUrl || '');
+    setCertSignUrl(siteConfig.certificate?.signatureUrl || '');
+    setCertIssueDate(siteConfig.certificate?.issueDate || '14 Juni 2026');
+    setWebinarSeriesTitle(siteConfig.hero.webinarSeriesTitle || '');
+    setWebinarDuration(siteConfig.hero.webinarDuration || '');
+    setCertificateNote(siteConfig.hero.certificateNote || '');
+    setWebinarParts(siteConfig.hero.webinarParts || []);
+    setImportanceReasons(siteConfig.importanceReasons || []);
+    setFailureReasons(siteConfig.failureReasons || []);
+    setLearningGoals(siteConfig.learningGoals || []);
+    setMethodologies(siteConfig.methodologies || []);
+    setShowLmsAndLive(siteConfig.showLmsAndLive ?? true);
+    setTargetParticipants(siteConfig.targetParticipants || []);
+    setInstitutions(siteConfig.institutions || []);
+    setHistoryList(siteConfig.about.history || []);
+  }, [siteConfig]);
 
   // Certificate Settings states
   const [certSignName, setCertSignName] = useState(siteConfig.certificate?.signatureName || 'Drs. Eddy Sudarmadji MM.,MBA');
@@ -134,6 +196,261 @@ export default function AdminPanel({
     }
   };
 
+  // Add direct handlers for webinar parts
+  const handleAddWebinarPart = () => {
+    const nextNum = webinarParts.length + 1;
+    const partWords = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+    const word = nextNum <= partWords.length ? partWords[nextNum - 1] : `${nextNum}`;
+    const newPart = {
+      id: `p-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      part: `Part ${word}`,
+      title: 'Materi Webinar Baru'
+    };
+    setWebinarParts([...webinarParts, newPart]);
+  };
+
+  const handleUpdateWebinarPartField = (id: string, field: 'part' | 'title', value: string) => {
+    setWebinarParts(webinarParts.map(p => p.id === id ? { ...p, [field]: value } : p));
+  };
+
+  const handleDeleteWebinarPart = (id: string) => {
+    if (confirm('Apakah Anda yakin ingin menghapus bagian webinar ini?')) {
+      setWebinarParts(webinarParts.filter(p => p.id !== id));
+    }
+  };
+
+  // Modern Era: Importance Reasons handlers
+  const handleAddImportanceReason = () => {
+    const newReason = {
+      id: `imp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      title: 'Poin Analisis Baru',
+      description: 'Deskripsi alasan mengapa poin ini penting untuk dikuasai di era modern saat ini.',
+      iconName: 'Globe'
+    };
+    setImportanceReasons([...importanceReasons, newReason]);
+  };
+
+  const handleUpdateImportanceReason = (id: string, field: 'title' | 'description' | 'iconName', value: string) => {
+    setImportanceReasons(importanceReasons.map(r => r.id === id ? { ...r, [field]: value } : r));
+  };
+
+  const handleDeleteImportanceReason = (id: string) => {
+    if (confirm('Apakah Anda yakin ingin menghapus poin penting ini?')) {
+      setImportanceReasons(importanceReasons.filter(r => r.id !== id));
+    }
+  };
+
+  // Failure Reasons handlers
+  const handleAddFailureReason = () => {
+    const newFail = {
+      id: `fail-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      title: 'Kendala / Hambatan Baru',
+      description: 'Rincian mengapa pembelajaran seringkali mengalami hambatan atau kegagalan saat mencoba menguasai bahasa Inggris.'
+    };
+    setFailureReasons([...failureReasons, newFail]);
+  };
+
+  const handleUpdateFailureReason = (id: string, field: 'title' | 'description', value: string) => {
+    setFailureReasons(failureReasons.map(f => f.id === id ? { ...f, [field]: value } : f));
+  };
+
+  const handleDeleteFailureReason = (id: string) => {
+    if (confirm('Apakah Anda yakin ingin menghapus alasan kegagalan ini?')) {
+      setFailureReasons(failureReasons.filter(f => f.id !== id));
+    }
+  };
+
+  // Learning Goals handlers
+  const handleAddLearningGoal = () => {
+    const nextNum = learningGoals.length + 1;
+    const newGoal = {
+      id: `lg-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      number: nextNum,
+      goal: 'Sasaran baru yang ingin dicapai dalam kurikulum JATC',
+      goalId: `goal-${nextNum}`
+    };
+    setLearningGoals([...learningGoals, newGoal]);
+  };
+
+  const handleUpdateLearningGoal = (id: string, field: 'number' | 'goal' | 'goalId', value: any) => {
+    setLearningGoals(learningGoals.map(g => g.id === id ? { ...g, [field]: value } : g));
+  };
+
+  const handleDeleteLearningGoal = (id: string) => {
+    if (confirm('Apakah Anda yakin ingin menghapus sasaran pembelajaran ini?')) {
+      const filtered = learningGoals.filter(g => g.id !== id);
+      const reindexed = filtered.map((g, idx) => ({
+        ...g,
+        number: idx + 1,
+        goalId: `goal-${idx + 1}`
+      }));
+      setLearningGoals(reindexed);
+    }
+  };
+
+  // Methodologies handlers
+  const handleAddMethodology = () => {
+    const newMeth = {
+      id: `meth-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      title: 'METHODOLOGY APPROACH',
+      subtitle: 'Pendekatan Metode Baru',
+      description: 'Penjelasan rinci mengenai metodologi baru JATC yang interaktif dan efektif.',
+      forWho: 'Pembelajaran / semua pembelajar yang membutuhkan akselerasi kemampuan.',
+      iconName: ''
+    };
+    setMethodologies([...methodologies, newMeth]);
+  };
+
+  const handleUpdateMethodology = (id: string, field: 'title' | 'subtitle' | 'description' | 'forWho', value: string) => {
+    setMethodologies(methodologies.map(m => m.id === id ? { ...m, [field]: value } : m));
+  };
+
+  const handleDeleteMethodology = (id: string) => {
+    if (confirm('Apakah Anda yakin ingin menghapus metodologi pengajaran ini?')) {
+      setMethodologies(methodologies.filter(m => m.id !== id));
+    }
+  };
+
+  // Target Participants handlers
+  const handleAddTargetParticipant = () => {
+    const newTp = {
+      id: `tp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      text: "Sasaran target peserta baru...",
+      imageUrl: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=150&auto=format&fit=crop"
+    };
+    setTargetParticipants([...targetParticipants, newTp]);
+  };
+
+  const handleUpdateTargetParticipantText = (id: string, text: string) => {
+    setTargetParticipants(targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, text } : tp) : { id: `tp-${Math.random()}`, text: String(tp) }));
+  };
+
+  const handleUpdateTargetParticipantImage = (id: string, imageUrl: string) => {
+    setTargetParticipants(targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl } : tp) : { id: `tp-${Math.random()}`, text: String(tp) }));
+  };
+
+  const handleDeleteTargetParticipant = (id: string) => {
+    if (confirm('Apakah Anda yakin ingin menghapus sasaran target peserta ini?')) {
+      setTargetParticipants(targetParticipants.filter(tp => tp && typeof tp === 'object' && 'id' in tp && tp.id !== id));
+    }
+  };
+
+  const handleTargetParticipantImageUpload = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setTargetParticipants(targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl: result } : tp) : { id: `tp-${Math.random()}`, text: String(tp) }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleHeroBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setBackgroundImageUrl(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleHeroBgUpload2 = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setBackgroundImageUrl2(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleHeroBgUpload3 = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setBackgroundImageUrl3(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleHeroBgUpload4 = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setBackgroundImageUrl4(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Institutions handlers
+  const handleAddInstitution = () => {
+    const newInst = {
+      id: `inst-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      name: 'Nama Lembaga / Instansi Baru',
+      logoUrl: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=200&auto=format&fit=crop'
+    };
+    setInstitutions([...institutions, newInst]);
+  };
+
+  const handleUpdateInstitutionName = (id: string, name: string) => {
+    setInstitutions(institutions.map(inst => inst.id === id ? { ...inst, name } : inst));
+  };
+
+  const handleUpdateInstitutionLogo = (id: string, logoUrl: string) => {
+    setInstitutions(institutions.map(inst => inst.id === id ? { ...inst, logoUrl } : inst));
+  };
+
+  const handleDeleteInstitution = (id: string) => {
+    if (confirm('Apakah Anda yakin ingin menghapus lembaga/instansi ini?')) {
+      setInstitutions(institutions.filter(inst => inst.id !== id));
+    }
+  };
+
+  // History handlers
+  const handleAddHistoryItem = () => {
+    if (!newHistTitle.trim() || !newHistImg.trim()) {
+      alert("Mohon isi judul dan lampirkan foto/URL foto untuk mendokumentasikan sejarah baru.");
+      return;
+    }
+    const newItem: JatcHistoryItem = {
+      id: `hist-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      title: newHistTitle.trim(),
+      year: newHistYear.trim() || new Date().getFullYear().toString(),
+      description: newHistDesc.trim(),
+      imageUrl: newHistImg.trim()
+    };
+    setHistoryList([...historyList, newItem]);
+    setNewHistTitle('');
+    setNewHistYear('');
+    setNewHistDesc('');
+    setNewHistImg('');
+  };
+
+  const handleDeleteHistoryItem = (id: string) => {
+    if (confirm('Apakah Anda yakin ingin menghapus foto sejarah/dokumentasi ini?')) {
+      setHistoryList(historyList.filter(item => item.id !== id));
+    }
+  };
+
+  const handleHistImgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setNewHistImg(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Save Homepage edit Configurations
   const handleSavePageConfig = () => {
     const updated: SiteConfig = {
@@ -144,12 +461,21 @@ export default function AdminPanel({
         tagline,
         subtitle,
         trainerName,
-        trainerTitle
+        trainerTitle,
+        webinarSeriesTitle,
+        webinarDuration,
+        webinarParts,
+        certificateNote,
+        backgroundImageUrl,
+        backgroundImageUrl2,
+        backgroundImageUrl3,
+        backgroundImageUrl4
       },
       about: {
         ...siteConfig.about,
         profile: profileText,
-        vision: visionText
+        vision: visionText,
+        history: historyList
       },
       contact: {
         officeAddress,
@@ -164,10 +490,29 @@ export default function AdminPanel({
         rightLogoUrl: certRightLogoUrl,
         signatureUrl: certSignUrl,
         issueDate: certIssueDate
-      }
+      },
+      importanceReasons,
+      failureReasons,
+      learningGoals,
+      methodologies,
+      showLmsAndLive,
+      targetParticipants,
+      institutions
     };
     setSiteConfig(updated);
-    alert('Informasi Beranda, Tentang Kami, dan Konfigurasi Sertifikat berhasil disimpan!');
+    alert('Konfigurasi Beranda, LMS & Live, Sasaran Target, dan Logo Kemitraan Lembaga berhasil disimpan!');
+  };
+
+  // Helper for Institution Logo Upload
+  const handleInstitutionLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setInstitutions(prev => prev.map(inst => inst.id === id ? { ...inst, logoUrl: result } : inst));
+    };
+    reader.readAsDataURL(file);
   };
 
   // Helper to read file contents for articles / gallery / certificate
@@ -563,6 +908,235 @@ export default function AdminPanel({
                       className="w-full text-xs rounded-lg border border-neutral-300 p-2 focus:border-brand-gold"
                     />
                   </div>
+
+                  {/* HERO BACKGROUND CONFIG */}
+                  <div className="md:col-span-2 bg-amber-50/40 p-4 rounded-xl border border-amber-200/60 space-y-3">
+                    <label className="block text-[10px] font-bold text-gray-600 uppercase tracking-wider font-mono">
+                      Foto Latar Belakang (Background Image) Landing Page Utama Beranda:
+                    </label>
+                    <p className="text-[10px] text-gray-500 font-sans leading-normal">
+                      Ubah gambar latar belakang pada bagian utama Beranda JATC (contoh: Gambar Patung Liberty / New York Skyline). Anda dapat mengunggah file foto lokal atau menempelkan tautan/link URL gambar luar secara langsung.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {backgroundImageUrl ? (
+                        <div className="shrink-0 relative group">
+                          <img
+                            src={backgroundImageUrl}
+                            alt="Preview Background"
+                            className="w-24 h-16 object-cover rounded-lg border-2 border-[#a18241]/30 bg-white"
+                            referrerPolicy="no-referrer"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setBackgroundImageUrl('')}
+                            className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full p-0.5 shadow-sm hover:bg-red-700 transition-colors cursor-pointer"
+                            title="Hapus Latar Belakang"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="shrink-0 w-24 h-16 rounded-lg bg-gray-200 border border-neutral-300 flex items-center justify-center text-[10px] text-gray-400 font-mono">
+                          Tanpa Gambar
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 w-full space-y-2">
+                        <div className="space-y-1">
+                          <span className="text-[9px] uppercase font-bold text-gray-400 block tracking-wide font-mono">Pilihan 1: Unggah Gambar (File):</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleHeroBgUpload}
+                            className="w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <span className="text-[9px] uppercase font-bold text-gray-400 block tracking-wide font-mono">Pilihan 2: Tempel Link / URL Gambar Luar:</span>
+                          <input
+                            type="text"
+                            value={backgroundImageUrl}
+                            onChange={(e) => setBackgroundImageUrl(e.target.value)}
+                            className="w-full text-xs rounded-lg border border-neutral-300 p-2 focus:border-brand-gold font-mono"
+                            placeholder="https://images.unsplash.com/... atau tautan gambar luar"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* HERO SECOND BACKGROUND CONFIG */}
+                  <div className="md:col-span-2 bg-[#0b2240]/5 p-4 rounded-xl border border-[#0b2240]/10 space-y-3">
+                    <label className="block text-[10px] font-bold text-gray-700 uppercase tracking-wider font-mono">
+                      Foto Latar Belakang Ke-2 (Brooklyn Bridge / Night Skyline) Beranda Bawah:
+                    </label>
+                    <p className="text-[10px] text-gray-500 font-sans leading-normal">
+                      Ubah gambar latar belakang atmosferik yang membungkus sub-bagian bawah halaman utama (contoh: Pemandangan Brooklyn Bridge malam hari). Anda dapat mengunggah file foto lokal atau menempelkan tautan/link URL gambar secara langsung.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {backgroundImageUrl2 ? (
+                        <div className="shrink-0 relative group">
+                          <img
+                            src={backgroundImageUrl2}
+                            alt="Preview Second Background"
+                            className="w-24 h-16 object-cover rounded-lg border-2 border-brand-gold/30 bg-white"
+                            referrerPolicy="no-referrer"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setBackgroundImageUrl2('')}
+                            className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full p-0.5 shadow-sm hover:bg-red-700 transition-colors cursor-pointer"
+                            title="Hapus Latar Belakang Ke-2"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="shrink-0 w-24 h-16 rounded-lg bg-gray-200 border border-neutral-300 flex items-center justify-center text-[10px] text-gray-400 font-mono">
+                          Tanpa Gambar
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 w-full space-y-2">
+                        <div className="space-y-1">
+                          <span className="text-[9px] uppercase font-bold text-gray-400 block tracking-wide font-mono">Pilihan 1: Unggah Gambar (File):</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleHeroBgUpload2}
+                            className="w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <span className="text-[9px] uppercase font-bold text-gray-400 block tracking-wide font-mono">Pilihan 2: Tempel Link / URL Gambar Luar:</span>
+                          <input
+                            type="text"
+                            value={backgroundImageUrl2}
+                            onChange={(e) => setBackgroundImageUrl2(e.target.value)}
+                            className="w-full text-xs rounded-lg border border-neutral-300 p-2 focus:border-brand-gold font-mono"
+                            placeholder="https://images.unsplash.com/... atau tautan gambar luar"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* HERO THIRD BACKGROUND CONFIG */}
+                  <div className="md:col-span-2 bg-[#0b2240]/5 p-4 rounded-xl border border-[#0b2240]/10 space-y-3">
+                    <label className="block text-[10px] font-bold text-gray-700 uppercase tracking-wider font-mono">
+                      Foto Latar Belakang Ke-3 (Mitra Lembaga & Perspektif Era Modern) Beranda Tengah-Bawah:
+                    </label>
+                    <p className="text-[10px] text-gray-500 font-sans leading-normal">
+                      Ubah gambar latar belakang atmosferik yang membungkus bagian Mitra Lembaga (Clients & Partners) serta bagian Perspektif Era Modern & Identifikasi Masalah kegagalan. Anda dapat mengunggah file foto lokal atau menempelkan tautan/link URL gambar secara langsung.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {backgroundImageUrl3 ? (
+                        <div className="shrink-0 relative group">
+                          <img
+                            src={backgroundImageUrl3}
+                            alt="Preview Third Background"
+                            className="w-24 h-16 object-cover rounded-lg border-2 border-brand-gold/30 bg-white"
+                            referrerPolicy="no-referrer"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setBackgroundImageUrl3('')}
+                            className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full p-0.5 shadow-sm hover:bg-red-700 transition-colors cursor-pointer"
+                            title="Hapus Latar Belakang Ke-3"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="shrink-0 w-24 h-16 rounded-lg bg-gray-200 border border-neutral-300 flex items-center justify-center text-[10px] text-gray-400 font-mono">
+                          Tanpa Gambar
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 w-full space-y-2">
+                        <div className="space-y-1">
+                          <span className="text-[9px] uppercase font-bold text-gray-400 block tracking-wide font-mono">Pilihan 1: Unggah Gambar (File):</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleHeroBgUpload3}
+                            className="w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <span className="text-[9px] uppercase font-bold text-gray-400 block tracking-wide font-mono">Pilihan 2: Tempel Link / URL Gambar Luar:</span>
+                          <input
+                            type="text"
+                            value={backgroundImageUrl3}
+                            onChange={(e) => setBackgroundImageUrl3(e.target.value)}
+                            className="w-full text-xs rounded-lg border border-neutral-300 p-2 focus:border-brand-gold font-mono"
+                            placeholder="https://images.unsplash.com/... atau tautan gambar luar"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* HERO FOURTH BACKGROUND CONFIG */}
+                  <div className="md:col-span-2 bg-[#0b2240]/5 p-4 rounded-xl border border-[#0b2240]/10 space-y-3">
+                    <label className="block text-[10px] font-bold text-gray-700 uppercase tracking-wider font-mono">
+                      Foto Latar Belakang Ke-4 (5 Metodologi Pengajaran Kontemporer) Beranda Tengah:
+                    </label>
+                    <p className="text-[10px] text-gray-500 font-sans leading-normal">
+                      Ubah gambar latar belakang atmosferik yang membungkus bagian 5 Metodologi Pengajaran Kontemporer. Anda dapat mengunggah file foto lokal atau menempelkan tautan/link URL gambar secara langsung.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {backgroundImageUrl4 ? (
+                        <div className="shrink-0 relative group">
+                          <img
+                            src={backgroundImageUrl4}
+                            alt="Preview Fourth Background"
+                            className="w-24 h-16 object-cover rounded-lg border-2 border-brand-gold/30 bg-white"
+                            referrerPolicy="no-referrer"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setBackgroundImageUrl4('')}
+                            className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full p-0.5 shadow-sm hover:bg-red-700 transition-colors cursor-pointer"
+                            title="Hapus Latar Belakang Ke-4"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="shrink-0 w-24 h-16 rounded-lg bg-gray-200 border border-neutral-300 flex items-center justify-center text-[10px] text-gray-400 font-mono">
+                          Tanpa Gambar
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 w-full space-y-2">
+                        <div className="space-y-1">
+                          <span className="text-[9px] uppercase font-bold text-gray-400 block tracking-wide font-mono">Pilihan 1: Unggah Gambar (File):</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleHeroBgUpload4}
+                            className="w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <span className="text-[9px] uppercase font-bold text-gray-400 block tracking-wide font-mono">Pilihan 2: Tempel Link / URL Gambar Luar:</span>
+                          <input
+                            type="text"
+                            value={backgroundImageUrl4}
+                            onChange={(e) => setBackgroundImageUrl4(e.target.value)}
+                            className="w-full text-xs rounded-lg border border-neutral-300 p-2 focus:border-brand-gold font-mono"
+                            placeholder="https://images.unsplash.com/... atau tautan gambar luar"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="md:col-span-2">
                     <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 font-mono">Profil / Sejarah Singkat (Tentang Kami):</label>
                     <textarea
@@ -605,6 +1179,792 @@ export default function AdminPanel({
                       onChange={(e) => setOperationalHours(e.target.value)}
                       className="w-full text-xs rounded-lg border border-neutral-300 p-2 focus:border-brand-gold"
                     />
+                  </div>
+                </div>
+
+                {/* KELOLA SPOTLIGHT & BAGIAN WEBINAR */}
+                <div className="mt-8 border-t border-dashed pt-6 space-y-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Video className="w-5 h-5 text-brand-gold" />
+                    <h5 className="font-serif text-sm font-bold text-[#0b2240]">Manajemen Sesi Webinar & Agenda Belajar (Spotlight)</h5>
+                  </div>
+                  <p className="text-[11px] text-gray-500 leading-relaxed font-sans">
+                    Penggantian tajuk seri utama, durasi kumulatif, catatan kelulusan, serta rincian kurikulum bagian (e.g. Part One, Part Two). Perubahan di bawah ini langsung merefleksikan tampilan visual di kotak biru beranda utama.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 font-mono">Judul Seri Webinar / Pembelajaran:</label>
+                      <input
+                        type="text"
+                        value={webinarSeriesTitle}
+                        onChange={(e) => setWebinarSeriesTitle(e.target.value)}
+                        className="w-full text-xs rounded-lg border border-neutral-300 p-2.5 focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none"
+                        placeholder="e.g. Two Day English Learning Revolution (12 Hour Method)"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 font-mono">Durasi Kumulatif / Keterangan Waktu:</label>
+                      <input
+                        type="text"
+                        value={webinarDuration}
+                        onChange={(e) => setWebinarDuration(e.target.value)}
+                        className="w-full text-xs rounded-lg border border-neutral-300 p-2.5 focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none"
+                        placeholder="e.g. 12 Jam Intensif (Terbagi dalam 4 Bagian/Times)"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 font-mono">Catatan Syarat Sertifikasi:</label>
+                      <textarea
+                        value={certificateNote}
+                        onChange={(e) => setCertificateNote(e.target.value)}
+                        className="w-full text-xs rounded-lg border border-neutral-300 p-2.5 h-16 resize-y focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none"
+                        placeholder="Sertifikat resmi dan eksklusif akan diberikan dengan bangga kepada para peserta yang telah menyelesaikan..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Webinar Parts Dynamic List: Add, Edit, Delete */}
+                  <div className="bg-neutral-50 p-4 sm:p-5 rounded-xl border border-neutral-200 mt-4 space-y-3">
+                    <div className="flex justify-between items-center pb-2 border-b border-neutral-200/60">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-serif text-xs font-bold text-brand-blue">Daftar Bagian (Course Modules Timeline)</span>
+                        <span className="bg-[#0b2240] text-brand-gold text-[9px] font-bold font-mono px-1.5 py-0.5 rounded-full">
+                          {webinarParts.length} Bagian
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddWebinarPart}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-brand-blue hover:bg-brand-blue/90 text-white rounded text-[10px] font-sans font-bold shadow transition-all cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" /> Tambah Bagian Baru
+                      </button>
+                    </div>
+
+                    {webinarParts.length === 0 ? (
+                      <div className="text-center py-6 text-[11px] text-gray-400 italic font-sans">
+                        Belum ada modul kustom bagian terdaftar. Klik "Tambah Bagian Baru" untuk memulainya.
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                        {webinarParts.map((partItem, idx) => (
+                          <div
+                            key={partItem.id}
+                            className="flex flex-col sm:flex-row gap-2 items-start sm:items-center bg-white p-3 rounded-lg border border-neutral-200 shadow-xs hover:border-[#a18241]/30 transition-all"
+                          >
+                            <span className="text-[10px] font-mono text-gray-400 font-bold sm:min-w-[20px]">
+                              #{idx + 1}
+                            </span>
+                            <div className="w-full sm:w-1/4">
+                              <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono sm:hidden mb-0.5">Label Bagian:</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. PART ONE"
+                                value={partItem.part}
+                                onChange={(e) => handleUpdateWebinarPartField(partItem.id, 'part', e.target.value)}
+                                className="w-full text-xs font-bold rounded border border-neutral-200 p-1.5 focus:border-[#a18241] outline-none text-[#a18241] uppercase font-mono"
+                              />
+                            </div>
+                            <div className="w-full sm:flex-1">
+                              <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono sm:hidden mb-0.5">Judul Materi / Topik:</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Developing English Mindset and Paradigm"
+                                value={partItem.title}
+                                onChange={(e) => handleUpdateWebinarPartField(partItem.id, 'title', e.target.value)}
+                                className="w-full text-xs rounded border border-neutral-200 p-1.5 focus:border-[#a18241] outline-none font-sans text-neutral-800"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteWebinarPart(partItem.id)}
+                              className="self-end sm:self-auto inline-flex items-center gap-1 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100/60 p-1.5 rounded-lg border border-red-200/40 text-[10px] transition-all cursor-pointer"
+                              title="Hapus Bagian"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span className="sm:hidden font-sans font-bold">Hapus</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* MANAGEMENT OF BENEFITS & FAILURES */}
+                <div className="mt-8 border-t border-dashed pt-6 space-y-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <HelpCircle className="w-5 h-5 text-brand-gold" />
+                    <h5 className="font-serif text-sm font-bold text-[#0b2240]">Manajemen Manfaat Bahasa Inggris & Analisis Masalah Belajar</h5>
+                  </div>
+                  <p className="text-[11px] text-gray-500 leading-relaxed font-sans">
+                    Kelola poin-poin analisis yang ditampilkan di bagian "Mengapa Penguasaan Bahasa Inggris Lebih Penting..." (Kiri) dan "Mengapa Jutaan Pembelajar Indonesia Gagal..." (Kanan). Anda bisa menambahkan poin baru, mengedit teks, memilih ikon representatif, serta menghapusnya secara langsung.
+                  </p>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-2">
+                    {/* COLUMN 1: IMPORTANCE REASONS (KIRI) */}
+                    <div className="bg-white p-4 rounded-xl border border-neutral-200 space-y-4">
+                      <div className="flex justify-between items-center pb-2 border-b">
+                        <div className="flex items-center gap-1.5">
+                          <Globe className="w-4 h-4 text-brand-blue" />
+                          <span className="font-serif text-xs font-bold text-brand-blue">1. Pentingnya Bahasa Inggris (Kiri Beranda)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleAddImportanceReason}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-brand-blue hover:bg-brand-blue/90 text-white rounded text-[10px] font-sans font-bold shadow transition-all cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" /> Tambah Poin Baru
+                        </button>
+                      </div>
+
+                      {importanceReasons.length === 0 ? (
+                        <div className="text-center py-6 text-[11px] text-gray-400 italic">
+                          Belum ada poin terdaftar. Silakan klik tambah baru.
+                        </div>
+                      ) : (
+                        <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
+                          {importanceReasons.map((reason, idx) => (
+                            <div key={reason.id} className="p-3 bg-neutral-50 rounded-lg border border-neutral-200/80 space-y-2 relative">
+                              <div className="flex justify-between items-center pb-1 border-b border-neutral-200/60">
+                                <span className="text-[10px] font-mono text-[#a18241] font-bold">Analisis Manfaat #{idx + 1}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteImportanceReason(reason.id)}
+                                  className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded transition-all cursor-pointer"
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <div className="sm:col-span-2">
+                                  <label className="block text-[8px] font-bold uppercase text-gray-400 mb-0.5 font-mono">Judul (Title):</label>
+                                  <input
+                                    type="text"
+                                    value={reason.title}
+                                    onChange={(e) => handleUpdateImportanceReason(reason.id, 'title', e.target.value)}
+                                    className="w-full text-xs rounded border border-neutral-300 p-1.5 focus:border-[#a18241] outline-none font-bold text-neutral-800"
+                                    placeholder="e.g. Global Bridge / Jembatan Global"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[8px] font-bold uppercase text-gray-400 mb-0.5 font-mono">Simbol / Ikon:</label>
+                                  <select
+                                    value={reason.iconName}
+                                    onChange={(e) => handleUpdateImportanceReason(reason.id, 'iconName', e.target.value)}
+                                    className="w-full text-xs rounded border border-neutral-300 p-1.5 focus:border-[#a18241] outline-none font-mono bg-white"
+                                  >
+                                    <option value="Globe">🌍 Globe</option>
+                                    <option value="Briefcase">💼 Briefcase</option>
+                                    <option value="BookOpen">📖 BookOpen</option>
+                                    <option value="Award">🏆 Award</option>
+                                    <option value="Sparkles">✨ Sparkles</option>
+                                    <option value="GraduationCap">🎓 GradCap</option>
+                                    <option value="Heart">❤️ Heart</option>
+                                    <option value="Bookmark">🔖 Bookmark</option>
+                                    <option value="Activity">⚡ Activity</option>
+                                  </select>
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[8px] font-bold uppercase text-gray-400 mb-0.5 font-mono">Penjelasan Deskripsi:</label>
+                                <textarea
+                                  value={reason.description}
+                                  onChange={(e) => handleUpdateImportanceReason(reason.id, 'description', e.target.value)}
+                                  className="w-full text-xs rounded border border-neutral-300 p-1.5 h-14 resize-y focus:border-[#a18241] outline-none text-neutral-600 font-sans"
+                                  placeholder="Deskripsi penjelasan..."
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* COLUMN 2: FAILURE REASONS (KANAN) */}
+                    <div className="bg-white p-4 rounded-xl border border-neutral-200 space-y-4">
+                      <div className="flex justify-between items-center pb-2 border-b">
+                        <div className="flex items-center gap-1.5">
+                          <HelpCircle className="w-4 h-4 text-red-600" />
+                          <span className="font-serif text-xs font-bold text-red-950">2. Penyebab Pembelajaran Gagal (Kanan Beranda)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleAddFailureReason}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-600 hover:bg-red-750 text-white rounded text-[10px] font-sans font-bold shadow transition-all cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" /> Tambah Poin Baru
+                        </button>
+                      </div>
+
+                      {failureReasons.length === 0 ? (
+                        <div className="text-center py-6 text-[11px] text-gray-400 italic">
+                          Belum ada poin penyebab kegagalan terdaftar. Silakan klik tambah baru.
+                        </div>
+                      ) : (
+                        <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
+                          {failureReasons.map((fail, idx) => (
+                            <div key={fail.id} className="p-3 bg-red-50/30 rounded-lg border border-red-200/50 space-y-2">
+                              <div className="flex justify-between items-center pb-1 border-b border-red-200/20">
+                                <span className="text-[10px] font-mono text-red-900/60 font-bold">Faktor Masalah #{idx + 1}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteFailureReason(fail.id)}
+                                  className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded transition-all cursor-pointer"
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                              <div>
+                                <label className="block text-[8px] font-bold uppercase text-red-700/60 mb-0.5 font-mono">Judul Hambatan (e.g. Istilah/Mindset):</label>
+                                <input
+                                  type="text"
+                                  value={fail.title}
+                                  onChange={(e) => handleUpdateFailureReason(fail.id, 'title', e.target.value)}
+                                  className="w-full text-xs rounded border border-red-200/70 p-1.5 focus:border-red-400 outline-none font-bold text-red-950"
+                                  placeholder="e.g. Mindset and Paradigm (Pola Pikir)"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[8px] font-bold uppercase text-red-700/60 mb-0.5 font-mono">Uraian / Penjelasan Masalah:</label>
+                                <textarea
+                                  value={fail.description}
+                                  onChange={(e) => handleUpdateFailureReason(fail.id, 'description', e.target.value)}
+                                  className="w-full text-xs rounded border border-red-200/70 p-1.5 h-14 resize-y focus:border-red-400 outline-none text-red-900 font-sans"
+                                  placeholder="Deskripsi masalah..."
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* MANAGEMENT OF LEARNING GOALS & METHODS (SASARAN BELAJAR & METODOLOGI PENGAJARAN) */}
+                <div className="mt-8 border-t border-dashed pt-6 space-y-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Layers className="w-5 h-5 text-brand-gold" />
+                    <h5 className="font-serif text-sm font-bold text-[#0b2240]">Manajemen Sasaran Belajar & Metodologi Pengajaran</h5>
+                  </div>
+                  <p className="text-[11px] text-gray-500 leading-relaxed font-sans">
+                    Kelola materi di bagian kurikulum utama yaitu "Sasaran Pembelajaran Utama JATC" (e.g. 7 Sasaran) dan "Metodologi Pengajaran Kontemporer" (e.g. 5 Metodologi). Perubahan ini langsung merubah visual kurikulum di halaman depan.
+                  </p>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-2">
+                    {/* COLUMN 1: LEARNING GOALS */}
+                    <div className="bg-white p-4 rounded-xl border border-neutral-200 space-y-4">
+                      <div className="flex justify-between items-center pb-2 border-b">
+                        <div className="flex items-center gap-1.5">
+                          <Bookmark className="w-4 h-4 text-brand-blue" />
+                          <span className="font-serif text-xs font-bold text-brand-blue">1. Sasaran Pembelajaran Utama JATC</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleAddLearningGoal}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-brand-blue hover:bg-brand-blue/90 text-white rounded text-[10px] font-sans font-bold shadow transition-all cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" /> Tambah Sasaran
+                        </button>
+                      </div>
+
+                      {learningGoals.length === 0 ? (
+                        <div className="text-center py-6 text-[11px] text-gray-400 italic">
+                          Belum ada sasaran pembelajaran. Silakan klik tambah baru.
+                        </div>
+                      ) : (
+                        <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
+                          {learningGoals.map((lg, idx) => (
+                            <div key={lg.id} className="p-3 bg-neutral-50 rounded-lg border border-neutral-200/85 space-y-2">
+                              <div className="flex justify-between items-center pb-1 border-b border-neutral-200/60">
+                                <span className="text-[10px] font-mono text-[#a18241] font-bold">Goal #{lg.number}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteLearningGoal(lg.id)}
+                                  className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded transition-all cursor-pointer"
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-4 gap-2">
+                                <div className="col-span-1">
+                                  <label className="block text-[8px] font-bold uppercase text-gray-400 mb-0.5 font-mono">No. Goal:</label>
+                                  <input
+                                    type="number"
+                                    value={lg.number}
+                                    onChange={(e) => handleUpdateLearningGoal(lg.id, 'number', parseInt(e.target.value) || (idx + 1))}
+                                    className="w-full text-xs rounded border border-neutral-300 p-1.5 focus:border-[#a18241] outline-none font-mono text-center"
+                                  />
+                                </div>
+                                <div className="col-span-3">
+                                  <label className="block text-[8px] font-bold uppercase text-gray-400 mb-0.5 font-mono">ID Referensi:</label>
+                                  <input
+                                    type="text"
+                                    value={lg.goalId}
+                                    onChange={(e) => handleUpdateLearningGoal(lg.id, 'goalId', e.target.value)}
+                                    className="w-full text-xs rounded border border-neutral-300 p-1.5 focus:border-[#a18241] outline-none font-mono"
+                                    placeholder="e.g. goal-1"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[8px] font-bold uppercase text-gray-400 mb-0.5 font-mono">Uraian Sasaran / Target:</label>
+                                <textarea
+                                  value={lg.goal}
+                                  onChange={(e) => handleUpdateLearningGoal(lg.id, 'goal', e.target.value)}
+                                  className="w-full text-xs rounded border border-neutral-300 p-1.5 h-16 resize-y focus:border-[#a18241] outline-none text-neutral-800 font-sans"
+                                  placeholder="Tulis uraian sasaran pembelajaran..."
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* COLUMN 2: CONTRACT TEACHING METHODOLOGY */}
+                    <div className="bg-white p-4 rounded-xl border border-neutral-200 space-y-4">
+                      <div className="flex justify-between items-center pb-2 border-b">
+                        <div className="flex items-center gap-1.5">
+                          <GraduationCap className="w-4 h-4 text-amber-600" />
+                          <span className="font-serif text-xs font-bold text-amber-950">2. Metodologi Pengajaran Kontemporer</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleAddMethodology}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-sans font-bold shadow transition-all cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" /> Tambah Metodologi
+                        </button>
+                      </div>
+
+                      {methodologies.length === 0 ? (
+                        <div className="text-center py-6 text-[11px] text-gray-400 italic">
+                          Belum ada metodologi terdaftar. Silakan klik tambah baru.
+                        </div>
+                      ) : (
+                        <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
+                          {methodologies.map((meth, idx) => (
+                            <div key={meth.id} className="p-3 bg-amber-50/10 rounded-lg border border-neutral-300/60 space-y-2">
+                              <div className="flex justify-between items-center pb-1 border-b border-amber-200/20">
+                                <span className="text-[10px] font-mono text-amber-950 font-bold">Metode #{idx + 1}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteMethodology(meth.id)}
+                                  className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded transition-all cursor-pointer"
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div>
+                                  <label className="block text-[8px] font-bold uppercase text-amber-900/60 mb-0.5 font-mono">Label Kategori (e.g. PSYCHOLOGICAL APPROACH):</label>
+                                  <input
+                                    type="text"
+                                    value={meth.title}
+                                    onChange={(e) => handleUpdateMethodology(meth.id, 'title', e.target.value)}
+                                    className="w-full text-xs font-bold rounded border border-neutral-300 p-1.5 focus:border-[#a18241] outline-none text-[#a18241] uppercase font-mono"
+                                    placeholder="e.g. PSYCHOLOGICAL APPROACH"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[8px] font-bold uppercase text-amber-900/60 mb-0.5 font-mono">Nama / Judul Pendekatan:</label>
+                                  <input
+                                    type="text"
+                                    value={meth.subtitle}
+                                    onChange={(e) => handleUpdateMethodology(meth.id, 'subtitle', e.target.value)}
+                                    className="w-full text-xs rounded border border-neutral-300 p-1.5 focus:border-[#a18241] outline-none font-bold text-neutral-800"
+                                    placeholder="e.g. Pendekatan Psikologis"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[8px] font-bold uppercase text-amber-900/60 mb-0.5 font-mono">Deskripsi Metode:</label>
+                                <textarea
+                                  value={meth.description}
+                                  onChange={(e) => handleUpdateMethodology(meth.id, 'description', e.target.value)}
+                                  className="w-full text-xs rounded border border-neutral-300 p-1.5 h-16 resize-y focus:border-[#a18241] outline-none text-neutral-600 font-sans"
+                                  placeholder="Uraian rincian metodologi..."
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[8px] font-bold uppercase text-amber-900/60 mb-0.5 font-mono">Cocok Untuk (Pembelajaran Target):</label>
+                                <input
+                                  type="text"
+                                  value={meth.forWho}
+                                  onChange={(e) => handleUpdateMethodology(meth.id, 'forWho', e.target.value)}
+                                  className="w-full text-xs rounded border border-neutral-300 p-1.5 focus:border-amber-500 outline-none font-sans font-medium text-amber-900"
+                                  placeholder="e.g. Pembelajaran yang mengalami trauma..."
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* SETELAN TAMPILAN LMS/LIVE, TARGET SASARAN, DAN MITRA LEMBAGA */}
+                <div className="mt-8 border-t border-dashed pt-6 space-y-6">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sliders className="w-5 h-5 text-brand-gold" />
+                    <h5 className="font-serif text-sm font-bold text-[#0b2240]">Setelan Tampilan LMS/Live, Target Sasaran, & Kemitraan Lembaga</h5>
+                  </div>
+                  <p className="text-[11px] text-gray-500 leading-relaxed font-sans">
+                    Lakukan penyesuaian untuk visibilitas materi LMS, daftar target jenjang pendidikan/tingkat peserta sasaran, serta unggah/kelola logo kemitraan lembaga yang pernah mengikuti pelatihan.
+                  </p>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* CARD 1: LMS & LIVE TOGGLES */}
+                    <div className="bg-white p-4 rounded-xl border border-neutral-200 space-y-4">
+                      <div className="flex items-center gap-2 pb-2 border-b">
+                        <Eye className="w-4 h-4 text-brand-blue" />
+                        <span className="font-serif text-xs font-bold text-brand-blue">Visibilitas Menu LMS & Live</span>
+                      </div>
+                      <p className="text-[10.5px] text-neutral-500 leading-normal font-sans">
+                        Pilih apakah menu/tab <strong>"Materi LMS & Live"</strong> dan tautan Sesi Live webinar ingin ditampilkan atau disembunyikan dari halaman depan (beranda) untuk pengunjung umum.
+                      </p>
+                      <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200 flex items-center justify-between">
+                        <span className="text-[11px] font-sans font-bold text-neutral-700">Tampilkan Materi LMS & Sesi Live:</span>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={showLmsAndLive}
+                            onChange={(e) => setShowLmsAndLive(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-neutral-300 peer-focus:outline-none rounded-full peer peer-checked:bg-emerald-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                        </label>
+                      </div>
+                      <span className="text-[9px] font-sans text-neutral-400 block italic">
+                        *Jika dinonaktifkan, tab Materi LMS & Live di header navigasi akan disembunyikan.
+                      </span>
+                    </div>
+
+                    {/* CARD 2: TARGET PARTICIPANTS (JENJANG SASARAN) */}
+                    <div className="bg-white p-4 rounded-xl border border-neutral-200 space-y-4">
+                      <div className="flex justify-between items-center pb-2 border-b">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-amber-600" />
+                          <span className="font-serif text-xs font-bold text-amber-950">Target Sasaran Peserta Kurikulum JATC</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleAddTargetParticipant}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[9px] font-sans font-bold shadow transition-all cursor-pointer"
+                        >
+                          <Plus className="w-2.5 h-2.5" /> Tambah
+                        </button>
+                      </div>
+                      <p className="text-[10.5px] text-neutral-500 leading-normal font-sans">
+                        Kelola daftar jenjang kualifikasi target (e.g. Profesor, S2, SMA, Lembaga) lengkap dengan foto ikon/gambar/link URL-nya.
+                      </p>
+
+                      {targetParticipants.length === 0 ? (
+                        <div className="text-center py-6 text-[11px] text-gray-400 italic">
+                          Belum ada target sasaran yang disimpan.
+                        </div>
+                      ) : (
+                        <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
+                          {targetParticipants.map((tpObj, idx) => {
+                            const tp = tpObj && typeof tpObj === 'object' && 'id' in tpObj ? (tpObj as TargetParticipantConfig) : { id: `tp-migrated-${idx}`, text: String(tpObj), imageUrl: '' };
+                            return (
+                              <div key={tp.id} className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10.5px] font-mono text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded">Sasaran #{idx + 1}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteTargetParticipant(tp.id)}
+                                    className="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded hover:bg-red-100"
+                                    title="Hapus"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <div>
+                                    <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono">Teks Sasaran:</label>
+                                    <textarea
+                                      rows={2}
+                                      value={tp.text}
+                                      onChange={(e) => handleUpdateTargetParticipantText(tp.id, e.target.value)}
+                                      className="w-full text-xs rounded border border-neutral-300 p-1.5 focus:border-amber-600 font-sans outline-none"
+                                      placeholder="Contoh: Peserta tingkat pendidikan S1, S2, S3..."
+                                    />
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono">Foto / Gambar (Upload atau URL):</label>
+                                    <div className="flex items-center gap-2">
+                                      {tp.imageUrl ? (
+                                        <img
+                                          src={tp.imageUrl}
+                                          alt={tp.text}
+                                          className="w-10 h-10 object-cover rounded bg-white border border-neutral-200"
+                                          referrerPolicy="no-referrer"
+                                        />
+                                      ) : (
+                                        <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-[8px] text-gray-400 font-mono">No Image</div>
+                                      )}
+                                      <div className="flex-1 space-y-1">
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={(e) => handleTargetParticipantImageUpload(e, tp.id)}
+                                          className="w-full text-[9px] text-gray-500 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
+                                        />
+                                        <input
+                                          type="text"
+                                          value={tp.imageUrl || ''}
+                                          onChange={(e) => handleUpdateTargetParticipantImage(tp.id, e.target.value)}
+                                          className="w-full text-[9px] rounded border border-neutral-300 p-0.5 font-mono"
+                                          placeholder="Atau tempel URL gambar luar..."
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* CARD 3: REBRANDABLE TRAINING INSTITUTIONS (MITRA LEMBAGA) */}
+                    <div className="bg-white p-4 rounded-xl border border-neutral-200 space-y-4">
+                      <div className="flex justify-between items-center pb-2 border-b">
+                        <div className="flex items-center gap-2">
+                          <Building className="w-4 h-4 text-brand-gold" />
+                          <span className="font-serif text-xs font-bold text-gray-800">Daftar Lembaga & Logo Mitra Pelatihan</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleAddInstitution}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-brand-blue hover:bg-brand-blue/90 text-white rounded text-[9px] font-sans font-bold shadow transition-all cursor-pointer"
+                        >
+                          <Plus className="w-2.5 h-2.5" /> Tambah
+                        </button>
+                      </div>
+                      <p className="text-[10.5px] text-neutral-500 leading-normal font-sans">
+                        Kelola data, nama, dan unggahan logo instansi/lembaga pemerintahan mau pun swasta yang telah mengikuti program pelatihan JATC.
+                      </p>
+
+                      {institutions.length === 0 ? (
+                        <div className="text-center py-6 text-[11px] text-gray-400 italic">
+                          Belum ada lembaga/instansi kemitraan terdaftar.
+                        </div>
+                      ) : (
+                        <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                          {institutions.map((inst) => (
+                            <div key={inst.id} className="p-2.5 bg-neutral-50 rounded-lg border border-neutral-200 space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[9px] font-mono text-[#a18241] font-bold">Lembaga ID: {inst.id.substring(0, 7)}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteInstitution(inst.id)}
+                                  className="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded"
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <div>
+                                  <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono">Nama Lembaga:</label>
+                                  <input
+                                    type="text"
+                                    value={inst.name}
+                                    onChange={(e) => handleUpdateInstitutionName(inst.id, e.target.value)}
+                                    className="w-full text-xs rounded border border-neutral-300 p-1 focus:border-[#a18241]"
+                                    placeholder="Masukkan nama lembaga..."
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono">Logo Lembaga (Ganti/Upload):</label>
+                                  <div className="flex items-center gap-2">
+                                    {inst.logoUrl ? (
+                                      <img
+                                        src={inst.logoUrl}
+                                        alt={inst.name}
+                                        className="w-8 h-8 object-contain rounded bg-white border border-neutral-200"
+                                        referrerPolicy="no-referrer"
+                                      />
+                                    ) : (
+                                      <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center text-[8px] text-gray-400 font-mono">No Logo</div>
+                                    )}
+                                    <div className="flex-1">
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleInstitutionLogoUpload(e, inst.id)}
+                                        className="w-full text-[9px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-[#0b2240]/10 file:text-[#0b2240] hover:file:bg-[#0b2240]/20 cursor-pointer"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={inst.logoUrl || ''}
+                                        onChange={(e) => handleUpdateInstitutionLogo(inst.id, e.target.value)}
+                                        className="w-full text-[9px] mt-1 rounded border border-neutral-300 p-0.5"
+                                        placeholder="Atau tempel URL logo..."
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* CARD 4: JATC HISTORY & EVIDENCE LIST */}
+                    <div className="bg-white p-5 rounded-xl border border-neutral-200 space-y-4 md:col-span-3">
+                      <div className="flex justify-between items-center pb-2 border-b">
+                        <div className="flex items-center gap-2">
+                          <Image className="w-4 h-4 text-brand-gold animate-pulse" />
+                          <span className="font-serif text-xs font-bold text-gray-800">Daftar History & Foto Pendukung JATC</span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-[10.5px] text-neutral-500 leading-normal font-sans">
+                        Kelola data dokumentasi, nama kegiatan, tahun, dan file foto pendukung untuk dibungkus dalam Sejarah & Dokumentasi Pendukung JATC di beranda Tentang Kami. Anda dapat mengunggah file foto lokal secara langsung atau memasukkan link URL gambar.
+                      </p>
+
+                      {/* Add New History Form */}
+                      <div className="bg-amber-50/30 p-4 rounded-xl border border-brand-gold/20 space-y-3">
+                        <span className="text-[10px] uppercase font-bold text-[#a18241] font-mono tracking-wider block">Tambah Foto Sejarah Baru:</span>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[8px] font-bold text-gray-400 uppercase font-mono mb-1">Judul Kegiatan / Sesi:</label>
+                            <input
+                              type="text"
+                              value={newHistTitle}
+                              onChange={(e) => setNewHistTitle(e.target.value)}
+                              className="w-full text-xs rounded border border-neutral-300 p-2 bg-white"
+                              placeholder="Contoh: Seminar Pembudayaan Logic di UI"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[8px] font-bold text-gray-400 uppercase font-mono mb-1">Tahun Kegiatan:</label>
+                            <input
+                              type="text"
+                              value={newHistYear}
+                              onChange={(e) => setNewHistYear(e.target.value)}
+                              className="w-full text-xs rounded border border-neutral-300 p-2 bg-white"
+                              placeholder="Contoh: 2024"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="block text-[8px] font-bold text-gray-400 uppercase font-mono mb-1">Keterangan / Deskripsi Singkat:</label>
+                            <textarea
+                              rows={2}
+                              value={newHistDesc}
+                              onChange={(e) => setNewHistDesc(e.target.value)}
+                              className="w-full text-xs rounded border border-neutral-300 p-2 bg-white resize-y"
+                              placeholder="Contoh: Drs. Eddy Sudarmadji membedah 5 Contemporary Methodologies di hadapan akademisi."
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2 space-y-1.5">
+                            <label className="block text-[8px] font-bold text-gray-400 uppercase font-mono mb-0.5">Lampiran Foto (Ganti/Upload):</label>
+                            <div className="flex flex-col sm:flex-row gap-3 items-center">
+                              {newHistImg ? (
+                                <img
+                                  src={newHistImg}
+                                  alt="Preview upload"
+                                  className="w-16 h-12 object-cover rounded border bg-neutral-200 shrink-0"
+                                  referrerPolicy="no-referrer"
+                                />
+                              ) : (
+                                <div className="w-16 h-12 bg-neutral-100 rounded border flex items-center justify-center text-[8px] text-gray-300 font-mono">No Image</div>
+                              )}
+                              
+                              <div className="flex-1 w-full space-y-1">
+                                <span className="text-[8px] text-gray-400 block font-mono">Pilihan 1: File Upload</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleHistImgUpload}
+                                  className="w-full text-[9px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-[#0b2240]/10 file:text-[#0b2240] cursor-pointer"
+                                />
+                                <span className="text-[8px] text-gray-400 block font-mono mt-1">Pilihan 2: Tempel Link Gambar Luar</span>
+                                <input
+                                  type="text"
+                                  value={newHistImg}
+                                  onChange={(e) => setNewHistImg(e.target.value)}
+                                  className="w-full text-[10px] rounded border border-neutral-300 p-1 bg-white"
+                                  placeholder="Atau masukkan link gambar luar langsung..."
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-right pt-2 border-t border-brand-gold/10">
+                          <button
+                            type="button"
+                            onClick={handleAddHistoryItem}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0b2240] hover:bg-[#0b2240]/95 text-white rounded text-[10px] font-bold tracking-wide shadow cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Tambahkan Ke Sejarah
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Display Existing Histories */}
+                      <div className="space-y-3">
+                        <span className="text-[10px] uppercase font-bold text-gray-400 font-mono tracking-wider block">Daftar Dokumentasi Sejarah Terkini ({historyList.length}):</span>
+                        {historyList.length === 0 ? (
+                          <div className="text-center py-6 text-xs text-gray-400 italic font-sans border border-dashed rounded-lg">
+                            Belum ada dokumen sejarah JATC terdaftar.
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 gap-2.5 max-h-[300px] overflow-y-auto pr-1">
+                            {historyList.map((hist) => (
+                              <div key={hist.id} className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 flex gap-3 text-left items-start justify-between">
+                                <div className="flex gap-3 flex-1 overflow-hidden">
+                                  <img
+                                    src={hist.imageUrl}
+                                    alt={hist.title}
+                                    className="w-16 h-12 object-cover rounded border bg-neutral-200 shrink-0"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                  <div className="space-y-1 flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="bg-[#a18241]/10 text-[#a18241] text-[9px] font-bold font-mono px-1.5 py-0.25 rounded">Tahun {hist.year}</span>
+                                      <span className="text-[8px] font-mono text-gray-400">ID: {hist.id.substring(0, 9)}</span>
+                                    </div>
+                                    <h6 className="text-[11px] font-bold text-[#0b2240] leading-tight truncate">{hist.title}</h6>
+                                    <p className="text-[10px] text-gray-500 font-sans leading-normal line-clamp-1">{hist.description}</p>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteHistoryItem(hist.id)}
+                                  className="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded hover:bg-red-100 cursor-pointer shrink-0"
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 
@@ -811,6 +2171,9 @@ export default function AdminPanel({
                     ])).filter(Boolean).map(sessTitle => (
                       <option key={sessTitle} value={sessTitle}>{sessTitle}</option>
                     ))}
+                    {members.some(m => !m.selectedSession) && (
+                      <option value="">Belajar Mandiri 🌿</option>
+                    )}
                   </select>
                   <span className="text-[10px] text-gray-400">
                     Menampilkan: <strong className="text-brand-blue">{members.filter(m => selectedSessionFilter === 'Semua Sesi' || m.selectedSession === selectedSessionFilter).length}</strong> dari {members.length} Anggota JATC
@@ -856,7 +2219,7 @@ export default function AdminPanel({
                                 <div className="text-[10px] text-gray-400 line-clamp-1" title={member.address}>{member.address}</div>
                               </td>
                               <td className="p-2.5 font-medium text-brand-blue">
-                                {member.selectedSession}
+                                {member.selectedSession || 'Belajar Mandiri 🌿'}
                               </td>
                               <td className="p-2.5">
                                 <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
@@ -999,6 +2362,7 @@ export default function AdminPanel({
                             onChange={e => setEditingMember({...editingMember, selectedSession: e.target.value})}
                             className="w-full rounded border p-2 text-xs font-sans focus:border-[#a18241] outline-none bg-white"
                           >
+                            <option value="">Belajar Mandiri</option>
                             {Array.from(new Set([
                               ...sessions.map(s => s.title),
                               ...members.map(m => m.selectedSession)
@@ -1151,7 +2515,7 @@ export default function AdminPanel({
                 <div className="border-b pb-2 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                   <div>
                     <h4 className="font-serif text-base font-bold text-brand-blue">Kelola Materi Kurikulum LMS</h4>
-                    <p className="text-[10px] text-gray-400 font-sans mt-0.5">Tambah, edit, dan hapus seluruh materi modul kurikulum mandiri interaktif JATC yang tampil di portal siswa.</p>
+                    <p className="text-[10px] text-gray-400 font-sans mt-0.5">Tambah, edit, dan hapus seluruh materi modul kurikulum mandiri interaktif JATC yang tampil di portal pembelajaran.</p>
                   </div>
                   <span className="px-2 py-0.5 bg-brand-blue/10 rounded text-[9px] font-bold font-mono text-brand-blue shrink-0 max-w-max">
                     Total: {lmsModules.length} Modul Aktif

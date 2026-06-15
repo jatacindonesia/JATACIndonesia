@@ -40,13 +40,13 @@ const DEFAULT_LMS_MODULES: LMSModule[] = [
     type: "pdf",
     durationOrPages: "22 Halaman PDF",
     category: "Instructor Program (Goal 7)",
-    description: "Panduan praktis menguasai 5 Contemporary Methodologies untuk diajarkan kembali kepada siswa baru Anda.",
+    description: "Panduan praktis menguasai 5 Contemporary Methodologies untuk diajarkan kembali kepada pembelajaran baru Anda.",
     goalReference: "Menjadi Instruktur Bahasa Inggris",
     fileUrl: "Instructor_Microteaching_Handbook.pdf"
   }
 ];
 
-export default function LMSPortal({ isLoggedIn = false, modules = DEFAULT_LMS_MODULES }: { isLoggedIn: boolean; modules?: LMSModule[] }) {
+export default function LMSPortal({ isLoggedIn = false, memberStatus, modules = DEFAULT_LMS_MODULES }: { isLoggedIn: boolean; memberStatus?: string; modules?: LMSModule[] }) {
   const [selectedModule, setSelectedModule] = useState<LMSModule | null>(null);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [completedModules, setCompletedModules] = useState<string[]>(['mod-1']);
@@ -79,12 +79,29 @@ export default function LMSPortal({ isLoggedIn = false, modules = DEFAULT_LMS_MO
     );
   }
 
+  if (isLoggedIn && memberStatus !== 'Selesai') {
+    return (
+      <div className="bg-amber-50/70 rounded-2xl border border-amber-300 p-8 text-center max-w-xl mx-auto space-y-4 font-sans">
+        <ShieldAlert className="w-12 h-14 text-amber-600 mx-auto animate-pulse" />
+        <h3 className="font-serif text-lg font-bold text-brand-blue">
+          {memberStatus === 'Ditolak' ? 'Akses Pendaftaran Ditolak ❌' : 'Akses Pendaftaran Sedang Ditinjau ⏳'}
+        </h3>
+        <p className="text-xs text-neutral-600 leading-relaxed max-w-md mx-auto">
+          Maaf, seluruh fasilitas belajar digital (LMS) dinonaktifkan sementara karena keanggotaan Anda saat ini berstatus <strong>{memberStatus === 'Ditolak' ? 'Ditolak' : 'Pending Peninjauan'}</strong>.
+        </p>
+        <p className="text-[10px] text-neutral-500">
+          Silakan tunggu persetujuan dari Administrator JATC Indonesia atau hubungi Admin via Whatsapp untuk bantuan verifikasi akun Anda.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 text-neutral-800" id="lms-hub-section">
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 bg-white rounded-xl border border-neutral-200 p-5">
         <div>
           <span className="text-[10px] uppercase font-bold text-[#a18241] font-mono tracking-wider">JATC Learning Hub (LMS)</span>
-          <h2 className="font-serif text-2xl font-bold text-brand-blue mt-0.5">Siswa Modul Belajar Digital</h2>
+          <h2 className="font-serif text-2xl font-bold text-brand-blue mt-0.5">Pembelajaran Modul Belajar Digital</h2>
           <p className="text-xs text-gray-500 font-sans mt-0.5">Akses materi PDF, podcast, dan info Zoom webinar Anda.</p>
         </div>
         <div className="flex items-center gap-2 bg-[#0b2240]/5 rounded-xl px-4 py-2.5">

@@ -41,13 +41,13 @@ const ASSESSMENT_QUESTIONS: QuizQuestion[] = [
     id: 3,
     question: "Bagaimanakah prinsip dasar dari 'Psychological Approach' dalam menanggulangi 'grammar trauma'?",
     options: [
-      "Siswa dihukum push-up setiap kali melakukan kesalahan tata bahasa.",
-      "Siswa dipaksa membaca kamus tebal selama 12 jam tanpa henti.",
-      "Menciptakan kondisi mental dan emosi yang aman, menurunkan kecemasan, serta memulihkan rasa percaya diri siswa lebih dulu.",
+      "Pembelajaran dihukum push-up setiap kali melakukan kesalahan tata bahasa.",
+      "Pembelajaran dipaksa membaca kamus tebal selama 12 jam tanpa henti.",
+      "Menciptakan kondisi mental dan emosi yang aman, menurunkan kecemasan, serta memulihkan rasa percaya diri pembelajaran lebih dulu.",
       "Menghindari pengajaran grammar sama sekali selamanya."
     ],
     correctAnswerIndex: 2,
-    explanation: "Pendekatan Psikologis memfokuskan mental siswa aman dan nyaman agar otak terbuka penuh menerima asimilasi linguistik tanpa dibayangi ketakutan dikritik."
+    explanation: "Pendekatan Psikologis memfokuskan mental pembelajaran aman dan nyaman agar otak terbuka penuh menerima asimilasi linguistik tanpa dibayangi ketakutan dikritik."
   },
   {
     id: 4,
@@ -66,7 +66,7 @@ const ASSESSMENT_QUESTIONS: QuizQuestion[] = [
     question: "Seseorang berhak lulus dinyatakan layak lulus sertifikasi kelayakan Instruktur Bahasa Inggris (Learning Goal 7) apabila...",
     options: [
       "Mampu menghafal daftar kata kerja berat tanpa tahu cara pakainya.",
-      "Menguasai tenses, memahami 5 metodologi kontemporer, menunjukkan rasa percaya diri yang tenang, serta sanggup membimbing siswa lain secara komunikatif.",
+      "Menguasai tenses, memahami 5 metodologi kontemporer, menunjukkan rasa percaya diri yang tenang, serta sanggup membimbing pembelajaran lain secara komunikatif.",
       "Memiliki jam mengajar konvensional minimal 85 tahun di sekolah negeri.",
       "Dapat menerjemahkan teks Indonesia ke Inggris dalam waktu kurang dari 0.1 detik."
     ],
@@ -97,6 +97,23 @@ export default function InteractiveQuiz({ loggedInMember }: { loggedInMember?: M
     setIsQuizStarted(false);
     setShowExplanation(false);
   };
+
+  if (loggedInMember && loggedInMember.status !== 'Selesai') {
+    return (
+      <div className="bg-amber-50/70 rounded-2xl border border-amber-300 p-8 text-center max-w-xl mx-auto space-y-4 font-sans">
+        <Lock className="w-12 h-14 text-amber-500 mx-auto animate-pulse" />
+        <h4 className="font-serif text-xl font-bold text-[#0b2240]">
+          Ujian Kompetensi Dikunci 🔒
+        </h4>
+        <p className="text-xs text-neutral-600 leading-relaxed font-sans max-w-md mx-auto">
+          Maaf, portal evaluasi kelayakan sertifikasi keinstrukturan digital dinonaktifkan sementara karena keanggotaan Anda saat ini berstatus <strong>{loggedInMember.status === 'Ditolak' ? 'Ditolak' : 'Pending Peninjauan'}</strong>.
+        </p>
+        <p className="text-[10px] text-neutral-500 font-sans">
+          Silakan hubungi Administrator JATC Indonesia via Whatsapp untuk bantuan verifikasi akun Anda.
+        </p>
+      </div>
+    );
+  }
 
   const handleStart = (e: React.FormEvent) => {
     e.preventDefault();

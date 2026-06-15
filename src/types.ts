@@ -14,6 +14,10 @@ export interface HeroConfig {
   certificateNote: string;
   trainerName: string;
   trainerTitle: string;
+  backgroundImageUrl?: string;
+  backgroundImageUrl2?: string;
+  backgroundImageUrl3?: string;
+  backgroundImageUrl4?: string;
 }
 
 export interface EnglishImportanceReason {
@@ -45,6 +49,14 @@ export interface LearningGoal {
   goalId: string;
 }
 
+export interface JatcHistoryItem {
+  id: string;
+  title: string;
+  year: string;
+  description: string;
+  imageUrl: string;
+}
+
 export interface AboutConfig {
   profile: string;
   vision: string;
@@ -54,6 +66,7 @@ export interface AboutConfig {
     details: string[];
   };
   legalities: string[];
+  history?: JatcHistoryItem[];
 }
 
 export interface Member {
@@ -134,6 +147,18 @@ export interface CertificateConfig {
   issueDate?: string; // Date the certificate is issued/released, e.g., "14 Juni 2026"
 }
 
+export interface InstitutionConfig {
+  id: string;
+  name: string;
+  logoUrl?: string;
+}
+
+export interface TargetParticipantConfig {
+  id: string;
+  text: string;
+  imageUrl?: string;
+}
+
 export interface SiteConfig {
   hero: HeroConfig;
   importanceReasons: EnglishImportanceReason[];
@@ -143,6 +168,9 @@ export interface SiteConfig {
   about: AboutConfig;
   contact: ContactConfig;
   certificate?: CertificateConfig;
+  showLmsAndLive?: boolean;
+  institutions?: InstitutionConfig[];
+  targetParticipants?: TargetParticipantConfig[];
 }
 
 export interface LMSModule {

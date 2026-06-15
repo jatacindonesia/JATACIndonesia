@@ -3,19 +3,23 @@ import { SiteConfig, Article, KoperasiAnnouncement, GalleryItem, LearningSession
 export const INITIAL_SITE_CONFIG: SiteConfig = {
   hero: {
     companyName: "JOHN ANDERSEN TRAINING AND CONSULTING INDONESIA",
-    tagline: "The Contemporary English Learning Revolution",
-    subtitle: "Solusi Pragmatis & Terarah untuk Mengatasi Masalah Belajar Bahasa Inggris Anda",
+    tagline: "Two Day English Learning Revolution",
+    subtitle: "Solusi proses pembelajaran  bahasa Inggris  berbasis  pendekatan psikologi, komunikasi  dan pendekatan komunikatif",
     webinarSeriesTitle: "Two Day English Learning Revolution (12 Hour Method)",
     webinarDuration: "12 Jam Intensif (Terbagi dalam 4 Bagian/Times)",
     webinarParts: [
-      { id: "p1", part: "Part One", title: "Developing English Mindset, Paradigm, and Psychology" },
+      { id: "p1", part: "Part One", title: "Developing English Mindset and Paradigm" },
       { id: "p2", part: "Part Two", title: "Mastering English Grammar Logic & Sentence Generation" },
       { id: "p3", part: "Part Three", title: "The 12-Hour Mastery of 16 English Tenses" },
       { id: "p4", part: "Part Four", title: "Instructor Program: Teaching Methodology & Leadership" }
     ],
     certificateNote: "Sertifikat resmi dan eksklusif akan diberikan dengan bangga kepada para peserta yang telah menyelesaikan ke-4 bagian webinar ini.",
     trainerName: "Drs. Eddy Sudarmadji MM.,MBA.,Dipl TEFL",
-    trainerTitle: "Lead Master Trainer & Founder"
+    trainerTitle: "Lead Master Trainer & Founder",
+    backgroundImageUrl: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&q=85&w=1800",
+    backgroundImageUrl2: "https://images.unsplash.com/photo-1518235506717-e1ed3306a89b?auto=format&fit=crop&q=85&w=1800",
+    backgroundImageUrl3: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=85&w=1800",
+    backgroundImageUrl4: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=85&w=1800"
   },
   importanceReasons: [
     {
@@ -41,7 +45,7 @@ export const INITIAL_SITE_CONFIG: SiteConfig = {
     {
       id: "fail-1",
       title: "Mindset and Paradigm (Pola Pikir)",
-      description: "Siswa sering melihat bahasa Inggris hanya sebagai subjek hapalan nilai sekolah, bukan alat bantu logika untuk berpikir sehari-hari."
+      description: "Pembelajaran sering melihat bahasa Inggris hanya sebagai subjek hapalan nilai sekolah, bukan alat bantu logika untuk berpikir sehari-hari."
     },
     {
       id: "fail-2",
@@ -65,7 +69,7 @@ export const INITIAL_SITE_CONFIG: SiteConfig = {
       title: "Psychological Approach",
       subtitle: "Pendekatan Psikologis",
       description: "Menghilangkan trauma grammar, rasa takut bersalah, dan kecemasan mental. Membangun kecerdasan emosional yang siap menerima serta mempraktekkan bahasa Inggris secara aman, nyaman, dan berani.",
-      forWho: "Siswa yang mengalami trauma grammar, merasa malu berbicara, atau memiliki motivasi belajar rendah.",
+      forWho: "Pembelajaran yang mengalami trauma grammar, merasa malu berbicara, atau memiliki motivasi belajar rendah.",
       iconName: "Smile"
     },
     {
@@ -73,7 +77,7 @@ export const INITIAL_SITE_CONFIG: SiteConfig = {
       title: "Communicative Approach",
       subtitle: "Pendekatan Komunikatif",
       description: "Memprioritaskan pemakaian bahasa sebagai media komunikasi nyata, mengesampingkan penghapalan rumus kaku. Belajar melalui simulasi diskusi interaktif, permainan peran (role-play), dan studi kasus nyata.",
-      forWho: "Siswa yang ingin melatih kelancaran berbicara (speaking) dan menyimak (listening) dalam percakapan sehari-hari.",
+      forWho: "Pembelajaran yang ingin melatih kelancaran berbicara (speaking) dan menyimak (listening) dalam percakapan sehari-hari.",
       iconName: "MessageSquare"
     },
     {
@@ -81,15 +85,15 @@ export const INITIAL_SITE_CONFIG: SiteConfig = {
       title: "Neuro Linguistic Programming (NLP)",
       subtitle: "Komunikasi Otak & Keyakinan",
       description: "Memrogram ulang keyakinan yang membatasi diri seperti 'belajar bahasa Inggris itu sulit'. Menggunakan visual, auditory, dan kinesthetic (VAK) anchors agar memori linguistik tersimpan awet di otak.",
-      forWho: "Siswa yang ingin meruntuhkan hambatan belajar bawah sadar dan meningkatkan kecepatan penguasaan bahasa.",
+      forWho: "Pembelajaran yang ingin meruntuhkan hambatan belajar bawah sadar dan meningkatkan kecepatan penguasaan bahasa.",
       iconName: "Zap"
     },
     {
       id: "meth-4",
-      title: "Transformative Generative",
+      title: "Transformative Geberative Grammar",
       subtitle: "Logika Generatif Mandiri",
-      description: "Mengajarkan logika tata bahasa yang mendalam. Siswa tidak sekedar menghapal kalimat contoh, melainkan memahami rancang bangun struktur bahasa untuk membuat jutaan kalimat secara mandiri sesuai tatanan asli.",
-      forWho: "Siswa yang ingin mahir menulis dan menyusun struktur gramatikal formal dengan logika berpikir bahasa Inggris.",
+      description: "Mengajarkan logika tata bahasa yang mendalam. Pembelajaran tidak sekedar menghapal kalimat contoh, melainkan memahami rancang bangun struktur bahasa untuk membuat jutaan kalimat secara mandiri sesuai tatanan asli.",
+      forWho: "Pembelajaran yang ingin mahir menulis dan menyusun struktur gramatikal formal dengan logika berpikir bahasa Inggris.",
       iconName: "Cpu"
     },
     {
@@ -115,7 +119,7 @@ export const INITIAL_SITE_CONFIG: SiteConfig = {
     vision: "Menjadi pusat edukasi bahasa Inggris, pelatihan instruktur, dan konsultasi komunikasi terdepan di Indonesia yang berlandaskan pemikiran logis, penguatan psikologis, dan metodologi kontemporer berstandar global.",
     mission: [
       "Mengikis ketakutan (grammar trauma) masyarakat Indonesia dalam menggunakan bahasa Inggris melalui pendekatan psikologis.",
-      "Mengajarkan logika tata bahasa (Grammar Logic) secara revolusioner agar siswa mampu memproduksi kalimat secara mandiri.",
+      "Mengajarkan logika tata bahasa (Grammar Logic) secara revolusioner agar pembelajaran mampu memproduksi kalimat secara mandiri.",
       "Mencetak instruktur-instruktur bahasa Inggris handal yang memiliki etika pengajaran unggul dan bersertifikat resmi.",
       "Membangun komunitas pembelajar aktif yang saling mendukung dalam meningkatkan rasa percaya diri dan keberanian berbahasa."
     ],
@@ -132,6 +136,29 @@ export const INITIAL_SITE_CONFIG: SiteConfig = {
       "NIB (Nomor Induk Berusaha): 1209328401349 ",
       "Izin Operasional Pelatihan Lembaga Swasta Nasional No: LKP/349/2024",
       "Sertifikasi Kompetensi Pengajaran Terakreditasi Nasional"
+    ],
+    history: [
+      {
+        id: "hist-1",
+        title: "Seminar Kebangsaan Pembudayaan Logika di Universitas Indonesia",
+        year: "2018",
+        description: "Drs. Eddy Sudarmadji membedah 5 Contemporary Methodologies untuk menyembuhkan trauma belajar bahasa Inggris di depan ribuan mahasiswa dan dosen.",
+        imageUrl: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=600&auto=format&fit=crop"
+      },
+      {
+        id: "hist-2",
+        title: "Pelantikan Sertifikasi Instruktur JATC Gelombang Pertama",
+        year: "2021",
+        description: "Melahirkan 30 instruktur bahasa Inggris handal yang tersertifikasi secara profesional untuk menyebarkan metode revolusioner John Andersen.",
+        imageUrl: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=600&auto=format&fit=crop"
+      },
+      {
+        id: "hist-3",
+        title: "Program Pelatihan Intensif English Logic untuk Eksekutif BUMN",
+        year: "2023",
+        description: "Meningkatkan daya saing global jajaran pimpinan BUMN melalui pemahaman mendalam tentang penataan struktur berpikir kalimat.",
+        imageUrl: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=600&auto=format&fit=crop"
+      }
     ]
   },
   contact: {
@@ -148,7 +175,52 @@ export const INITIAL_SITE_CONFIG: SiteConfig = {
     rightLogoUrl: "", // Secondary brand/partner logo on top right if uploaded
     signatureUrl: "", // Defaults to empty string or handwritten font signature if empty
     issueDate: "14 Juni 2026" // Default date for certificate issuance
-  }
+  },
+  showLmsAndLive: true,
+  targetParticipants: [
+    {
+      id: "tp-1",
+      text: "Peserta dengan tingkat pendidikan : Profesor, S3, S2, S1, SMA.",
+      imageUrl: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=150&auto=format&fit=crop"
+    },
+    {
+      id: "tp-2",
+      text: "Lembaga-lembaga pemerintahan dan swasta.",
+      imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=150&auto=format&fit=crop"
+    },
+    {
+      id: "tp-3",
+      text: "Lembaga-lembaga lain yang menginginkan",
+      imageUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=150&auto=format&fit=crop"
+    }
+  ],
+  institutions: [
+    {
+      id: "inst-1",
+      name: "Kementerian Keuangan RI",
+      logoUrl: "https://images.unsplash.com/photo-1593642532400-2682810df593?q=80&w=200&auto=format&fit=crop"
+    },
+    {
+      id: "inst-2",
+      name: "Badan Perencanaan Pembangunan Nasional (Bappenas)",
+      logoUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=200&auto=format&fit=crop"
+    },
+    {
+      id: "inst-3",
+      name: "PT Pertamina (Persero)",
+      logoUrl: "https://images.unsplash.com/photo-1542744094-3a31f103e35f?q=80&w=200&auto=format&fit=crop"
+    },
+    {
+      id: "inst-4",
+      name: "Universitas Indonesia (UI)",
+      logoUrl: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=200&auto=format&fit=crop"
+    },
+    {
+      id: "inst-5",
+      name: "PT Telekomunikasi Indonesia Tbk",
+      logoUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=200&auto=format&fit=crop"
+    }
+  ]
 };
 
 export const INITIAL_ARTICLES: Article[] = [
@@ -452,7 +524,7 @@ export const INITIAL_LMS_MODULES: LMSModule[] = [
     type: "pdf",
     durationOrPages: "22 Halaman PDF",
     category: "Instructor Program (Goal 7)",
-    description: "Panduan praktis menguasai 5 Contemporary Methodologies untuk diajarkan kembali kepada siswa baru Anda.",
+    description: "Panduan praktis menguasai 5 Contemporary Methodologies untuk diajarkan kembali kepada pembelajaran baru Anda.",
     goalReference: "Menjadi Instruktur Bahasa Inggris",
     fileUrl: "Instructor_Microteaching_Handbook.pdf"
   }

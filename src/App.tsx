@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Globe, Briefcase, BookOpen, Award, Phone, Mail, MapPin, Clock, User, LogIn, Lock, Settings,
-  Layers, MessageSquare, Calendar, ChevronRight, Sparkles, Plus, Menu, X, GraduationCap, CheckCircle,
+  Layers, MessageSquare, Calendar, ChevronRight, ChevronLeft, Sparkles, Plus, Menu, X, GraduationCap, CheckCircle,
   FileText, ArrowUpRight, HelpCircle, Activity, Heart, Bookmark, Database, Printer, Video, ExternalLink, ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -33,7 +33,33 @@ export default function App() {
   // Global Multi-State with LocalStorage persistence
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
     const local = localStorage.getItem('jatc_site_config');
-    return local ? JSON.parse(local) : INITIAL_SITE_CONFIG;
+    if (local) {
+      try {
+        const parsed = JSON.parse(local);
+        if (!parsed.hero) {
+          parsed.hero = { ...INITIAL_SITE_CONFIG.hero };
+        }
+        if (!parsed.hero.backgroundImageUrl) {
+          parsed.hero.backgroundImageUrl = "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&q=85&w=1800";
+        }
+        if (!parsed.hero.backgroundImageUrl2) {
+          parsed.hero.backgroundImageUrl2 = "https://images.unsplash.com/photo-1518235506717-e1ed3306a89b?auto=format&fit=crop&q=85&w=1800";
+        }
+        if (!parsed.hero.backgroundImageUrl3) {
+          parsed.hero.backgroundImageUrl3 = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=85&w=1800";
+        }
+        if (!parsed.hero.backgroundImageUrl4) {
+          parsed.hero.backgroundImageUrl4 = "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=85&w=1800";
+        }
+        if (parsed.about && (!parsed.about.history || parsed.about.history.length === 0)) {
+          parsed.about.history = [...(INITIAL_SITE_CONFIG.about.history || [])];
+        }
+        return parsed;
+      } catch (e) {
+        return INITIAL_SITE_CONFIG;
+      }
+    }
+    return INITIAL_SITE_CONFIG;
   });
 
   const [members, setMembers] = useState<Member[]>(() => {
@@ -99,6 +125,10 @@ export default function App() {
   // Sub tab selection inside member dashboard
   const [memberSubTab, setMemberSubTab] = useState<'profile' | 'lms' | 'webinar'>('profile');
 
+  // Carousel indices for target participants & partners on homepage
+  const [targetIdx, setTargetIdx] = useState(0);
+  const [partnerIdx, setPartnerIdx] = useState(0);
+
   // Sync to localStorages on state changes
   useEffect(() => {
     localStorage.setItem('jatc_site_config', JSON.stringify(siteConfig));
@@ -131,13 +161,6 @@ export default function App() {
       localStorage.removeItem('jatc_logged_member');
     }
   }, [loggedInMember]);
-
-  // Sourced session fallback initial value
-  useEffect(() => {
-    if (sessions.length > 0 && !regSession) {
-      setRegSession(sessions[0].title);
-    }
-  }, [sessions]);
 
   // Handle defaults restore
   const handleResetToDefaults = () => {
@@ -178,7 +201,7 @@ export default function App() {
       phone: regPhone,
       email: regEmail,
       address: regAddress,
-      selectedSession: regSession || (sessions.length > 0 ? sessions[0].title : 'Sesi Webinar Utama'),
+      selectedSession: regSession,
       registeredAt: new Date().toISOString().substring(0, 10),
       status: 'Pending'
     };
@@ -262,9 +285,10 @@ export default function App() {
             <nav className="hidden lg:flex items-center space-x-1.5 text-xs font-sans font-medium">
               {[
                 { id: 'beranda', label: 'Beranda' },
+                { id: 'target-mitra', label: 'Target & Mitra' },
                 { id: 'tentang', label: 'Tentang Kami' },
                 { id: 'tenses', label: '16 Tenses Hub' },
-                { id: 'lms', label: 'Materi LMS & Live' },
+                ...((siteConfig.showLmsAndLive ?? true) ? [{ id: 'lms', label: 'Materi LMS & Live' }] : []),
                 { id: 'berita', label: 'Kegiatan & Artikel' },
                 { id: 'pendaftaran', label: 'Pendaftaran' },
                 { id: 'login', label: 'Login', icon: LogIn }
@@ -311,9 +335,10 @@ export default function App() {
               <div className="px-4 pt-2 pb-6 space-y-2 text-sm font-medium">
                 {[
                   { id: 'beranda', label: 'Beranda' },
+                  { id: 'target-mitra', label: 'Target & Mitra Sasaran' },
                   { id: 'tentang', label: 'Tentang Kami' },
                   { id: 'tenses', label: '16 English Tenses Hub' },
-                  { id: 'lms', label: 'Materi LMS & Sesi Live' },
+                  ...((siteConfig.showLmsAndLive ?? true) ? [{ id: 'lms', label: 'Materi LMS & Sesi Live' }] : []),
                   { id: 'berita', label: 'Berita & Artikel Kegiatan' },
                   { id: 'pendaftaran', label: 'Pendaftaran Anggota' },
                   { id: 'login', label: 'Login Platform', icon: LogIn }
@@ -327,7 +352,7 @@ export default function App() {
                     className={`w-full text-left px-4 py-2.5 rounded-lg flex items-center gap-2 ${
                       activeTab === tab.id
                         ? 'bg-brand-gold text-neutral-900 font-bold'
-                        : 'hover:bg-white/10 text-neutral-250'
+                        : 'hover:bg-white/10 text-[#f5ebd7]'
                     }`}
                   >
                     {tab.icon && <tab.icon className="w-4 h-4" />}
@@ -352,248 +377,600 @@ export default function App() {
               className="space-y-16"
             >
               {/* Dynamic Landing Hero */}
-              <section className="bg-white rounded-3xl border border-neutral-200 overflow-hidden shadow-sm grid grid-cols-1 lg:grid-cols-2">
-                <div className="p-8 sm:p-12 md:p-16 flex flex-col justify-center space-y-6">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0b2240]/10 text-brand-blue text-[11px] font-bold font-mono uppercase tracking-widest">
-                    <Sparkles className="w-3.5 h-3.5 text-brand-gold animate-pulse shrink-0" />
-                    REVOLUSI ENGLISH BELAJAR 12 JAM
-                  </div>
-                  
-                  <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0b2240] tracking-tight leading-tight">
-                    {siteConfig.hero.companyName}
-                  </h1>
-                  
-                  <blockquote className="border-l-4 border-[#c5a059] pl-4 italic text-[#a18241] font-serif text-base sm:text-lg font-medium leading-relaxed">
-                    "{siteConfig.hero.tagline}"
-                  </blockquote>
-                  
-                  <p className="text-sm text-gray-500 leading-relaxed font-sans font-normal">
-                    {siteConfig.hero.subtitle}
-                  </p>
+              <section 
+                className="rounded-3xl border-2 border-brand-gold/25 overflow-hidden shadow-lg relative min-h-[550px] p-4 sm:p-6 md:p-8 lg:p-10 flex items-center justify-center"
+                style={{
+                  backgroundImage: siteConfig.hero.backgroundImageUrl ? `url(${siteConfig.hero.backgroundImageUrl})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              >
+                {/* Ambient dark visual overlay layer to elevate contrast of the framing border */}
+                <div className="absolute inset-0 bg-neutral-900/15 pointer-events-none" />
 
-                  <div className="flex flex-wrap gap-3 pt-2">
-                    <button
-                      onClick={() => setActiveTab('pendaftaran')}
-                      className="px-6 py-3 bg-[#0b2240] hover:bg-[#0b2240]/90 text-white font-semibold text-xs font-sans rounded-xl tracking-wide shadow-md hover:shadow-lg transition-all cursor-pointer"
-                    >
-                      Daftar Anggota Baru
-                    </button>
-                    <button
-                      onClick={() => {
-                        const target = document.getElementById('methodology-section');
-                        if (target) target.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                      className="px-6 py-3 bg-white border border-neutral-300 text-gray-700 hover:bg-neutral-50 font-semibold text-xs font-sans rounded-xl transition-all cursor-pointer"
-                    >
-                      Pelajari 5 Metodologi
-                    </button>
-                  </div>
-                </div>
+                {/* Inner Card Grid Container (with frosted glass backing) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl w-full relative z-10 border border-white/30">
+                  {/* Left Column with high legibility frosted glass */}
+                  <div className="p-6 sm:p-10 md:p-12 flex flex-col justify-center space-y-6 bg-white/65 lg:bg-white/60 backdrop-blur-md relative">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 self-start rounded-full bg-[#0b2240]/10 text-brand-blue text-[11px] font-bold font-mono uppercase tracking-widest">
+                      <Sparkles className="w-3.5 h-3.5 text-brand-gold animate-pulse shrink-0" />
+                      REVOLUSI ENGLISH BELAJAR 12 JAM
+                    </div>
+                    
+                    <h1 className="font-serif text-2xl sm:text-3xl lg:text-4.5xl font-extrabold text-[#0b2240] tracking-tight leading-tight">
+                      {siteConfig.hero.companyName}
+                    </h1>
+                    
+                    <blockquote className="border-l-4 border-[#c5a059] pl-4 italic text-[#a18241] font-serif text-sm sm:text-base font-medium leading-relaxed">
+                      "{siteConfig.hero.tagline}"
+                    </blockquote>
+                    
+                    <p className="text-xs sm:text-sm text-gray-800 leading-relaxed font-sans font-extrabold shadow-xs">
+                      {siteConfig.hero.subtitle}
+                    </p>
 
-                {/* Interactive Webinar Spotlight Panel (Goal 1 / 12 Hour Method) */}
-                <div className="bg-[#0b2240] text-white p-8 sm:p-12 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-white/10">
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] uppercase font-bold text-brand-gold font-mono tracking-widest">Webinar Invitation Spotlight:</span>
-                      <span className="text-[10px] font-mono bg-white/10 text-neutral-200 px-2.5 py-0.5 rounded-full">Drs. Eddy Sudarmadji Method</span>
+                    <div className="flex flex-wrap gap-3 pt-2">
+                      <button
+                        onClick={() => setActiveTab('pendaftaran')}
+                        className="px-6 py-3 bg-[#0b2240] hover:bg-[#a18241] hover:text-white text-white font-semibold text-xs font-sans rounded-xl tracking-wide shadow-md hover:shadow-lg transition-all cursor-pointer"
+                      >
+                        Daftar Anggota Baru
+                      </button>
+                      <button
+                        onClick={() => {
+                          const target = document.getElementById('methodology-section');
+                          if (target) target.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="px-6 py-3 bg-white/90 border border-neutral-300 text-gray-800 hover:bg-white font-bold text-xs font-sans rounded-xl transition-all cursor-pointer shadow-sm"
+                      >
+                        Pelajari 5 Metodologi
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Interactive Webinar Spotlight Panel (Goal 1 / 12 Hour Method) with tinted frosted backdrop */}
+                  <div className="bg-[#0b2240]/60 lg:bg-[#0b2240]/50 backdrop-blur-md text-white p-6 sm:p-10 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-white/20 relative">
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-[10px] uppercase font-bold text-brand-gold font-mono tracking-widest">Webinar Invitation Spotlight:</span>
+                        <span className="text-[10px] font-mono bg-white/10 text-neutral-200 px-2.5 py-0.5 rounded-full">Drs. Eddy Method</span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <h3 className="font-serif text-lg sm:text-xl font-bold tracking-tight text-white leading-snug">
+                          {siteConfig.hero.webinarSeriesTitle}
+                        </h3>
+                        <p className="text-[11px] text-[#f0dfc1] tracking-wide font-sans">
+                          Sistem pelatihan berkapasitas tinggi: {siteConfig.hero.webinarDuration}
+                        </p>
+                      </div>
+
+                      {/* Timeline of Webinars */}
+                      <div className="space-y-3 pt-1">
+                        {siteConfig.hero.webinarParts.map((p, idx) => (
+                          <div key={p.id} className="flex gap-2.5 items-start border-l-2 border-brand-gold/30 pl-3 py-0.5">
+                            <div className="text-[9px] font-mono text-brand-gold uppercase tracking-wider font-bold mt-0.5">
+                              {p.part}
+                            </div>
+                            <div>
+                              <p className="text-xs font-sans font-bold text-white tracking-wide">{p.title}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <h3 className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-white leading-snug">
-                        {siteConfig.hero.webinarSeriesTitle}
-                      </h3>
-                      <p className="text-xs text-[#f0dfc1] tracking-wide font-sans">
-                        Sistem pelatihan berkapasitas tinggi: {siteConfig.hero.webinarDuration}
+                    <div className="pt-6 border-t border-white/10 mt-6 space-y-4">
+                      <p className="text-[10px] text-gray-300 font-sans leading-relaxed">
+                        {siteConfig.hero.certificateNote}
+                      </p>
+                      <div className="flex items-center gap-3 bg-white/5 rounded-xl p-2.5 border border-white/5">
+                        <div className="w-10 h-10 rounded-full bg-brand-gold flex items-center justify-center text-[#0b2240] font-bold font-serif leading-none select-none text-base">
+                          ES
+                        </div>
+                        <div>
+                          <div className="font-serif font-bold text-xs text-white">{siteConfig.hero.trainerName}</div>
+                          <div className="text-[10px] text-brand-gold font-sans">{siteConfig.hero.trainerTitle}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Lower Page Outer Banner with Customizable Night Skyline Background - ONLY wrapping Learning Target Map & Target Kelayakan */}
+              <div 
+                className="rounded-3xl border border-white/10 p-5 sm:p-8 md:p-12 relative overflow-hidden shadow-2xl transition-all"
+                style={{
+                  backgroundImage: siteConfig.hero.backgroundImageUrl2 ? `url(${siteConfig.hero.backgroundImageUrl2})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              >
+                {/* Contrast overlay layer for excellent readability */}
+                <div className="absolute inset-0 bg-[#061427]/75 pointer-events-none" />
+
+                {/* Inner layout wrapper to structure elements nicely */}
+                <div className="relative z-10 space-y-12">
+
+                  {/* SECTION: 7 LEARNING GOALS BAR */}
+                  <section className="space-y-6">
+                    <div className="text-center space-y-1.5">
+                      <span className="text-[10px] font-mono font-bold text-brand-gold uppercase tracking-widest block">LEARNING TARGETS MAP</span>
+                      <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+                        {siteConfig.learningGoals.length} Sasaran Pembelajaran Utama JATC
+                      </h2>
+                      <p className="text-xs text-gray-300 max-w-lg mx-auto font-sans leading-relaxed">
+                        Sistem materi kurikulum kami didesain presisi untuk melampaui hambatan mental konvensional hingga Anda siap dinobatkan menjadi instruktur.
                       </p>
                     </div>
 
-                    {/* Timeline of Webinars */}
-                    <div className="space-y-3 pt-2">
-                      {siteConfig.hero.webinarParts.map((p, idx) => (
-                        <div key={p.id} className="flex gap-3 items-start border-l-2 border-brand-gold/30 pl-4 py-1">
-                          <div className="text-[10px] font-mono text-brand-gold uppercase tracking-wider font-bold mt-0.5">
-                            {p.part}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {siteConfig.learningGoals.map((lg) => (
+                        <div key={lg.id} className="bg-white/10 backdrop-blur-md rounded-xl border border-white/15 p-4 flex gap-3 shadow-md hover:border-brand-gold/60 hover:scale-[1.02] hover:bg-white/15 transition-all text-white">
+                          <div className="text-sm font-mono font-bold text-brand-gold bg-white/10 w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
+                            {lg.number}
                           </div>
-                          <div>
-                            <p className="text-xs font-sans font-bold text-white tracking-wide">{p.title}</p>
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-mono font-bold text-neutral-300 uppercase leading-none block select-none">
+                              Goal {lg.number}
+                            </span>
+                            <p className="text-xs font-sans text-white font-bold leading-normal">
+                              {lg.goal}
+                            </p>
                           </div>
                         </div>
                       ))}
                     </div>
-                  </div>
 
-                  <div className="pt-6 border-t border-white/10 mt-6 space-y-4">
-                    <p className="text-[10px] text-gray-300 font-sans leading-relaxed">
-                      {siteConfig.hero.certificateNote}
-                    </p>
-                    <div className="flex items-center gap-3 bg-white/5 rounded-xl p-3.5 border border-white/5">
-                      <div className="w-10 h-10 rounded-full bg-brand-gold flex items-center justify-center text-[#0b2240] font-bold font-serif leading-none select-none text-base">
-                        ES
-                      </div>
-                      <div>
-                        <div className="font-serif font-bold text-xs text-white">{siteConfig.hero.trainerName}</div>
-                        <div className="text-[10px] text-brand-gold font-sans">{siteConfig.hero.trainerTitle}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
+                    {/* SUBSECTION: TARGET SASARAN PESERTA PELATIHAN */}
+                    {siteConfig.targetParticipants && siteConfig.targetParticipants.length > 0 && (
+                      <div className="bg-white/5 backdrop-blur-md rounded-3xl border-2 border-white/10 p-6 sm:p-8 mt-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                          <div className="lg:col-span-4 space-y-4">
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-mono font-bold text-brand-gold uppercase tracking-wider block">TARGET KELAYAKAN</span>
+                              <h3 className="font-serif text-xl sm:text-2xl font-bold text-white">
+                                Sasaran Kualifikasi Peserta Pelatihan JATC
+                              </h3>
+                            </div>
+                            <p className="text-xs text-neutral-200 font-sans leading-relaxed">
+                              Metodologi akseleratif JATC disesuaikan secara khusus bagi kalangan akademisi, aparatur negara, badan swasta, maupun instansi independen.
+                            </p>
+                            
+                            {/* Control buttons & View all */}
+                            <div className="flex flex-wrap items-center gap-3 pt-2">
+                              {siteConfig.targetParticipants.length > 4 && (
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    onClick={() => {
+                                      const total = siteConfig.targetParticipants?.length || 0;
+                                      setTargetIdx(prev => (prev === 0 ? Math.max(0, total - 4) : prev - 1));
+                                    }}
+                                    className="w-8 h-8 rounded-full bg-brand-gold text-[#0b2240] hover:bg-brand-gold/80 transition-all flex items-center justify-center cursor-pointer shadow-sm select-none"
+                                    title="Sebelumnya"
+                                  >
+                                    <ChevronLeft className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      const total = siteConfig.targetParticipants?.length || 0;
+                                      setTargetIdx(prev => (prev >= Math.max(0, total - 4) ? 0 : prev + 1));
+                                    }}
+                                    className="w-8 h-8 rounded-full bg-brand-gold text-[#0b2240] hover:bg-brand-gold/80 transition-all flex items-center justify-center cursor-pointer shadow-sm select-none"
+                                    title="Berikutnya"
+                                  >
+                                    <ChevronRight className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )}
+                              <button
+                                onClick={() => setActiveTab('target-mitra')}
+                                className="text-xs font-bold text-brand-gold hover:text-white underline transition-colors cursor-pointer"
+                              >
+                                Lihat Semua Sasaran &rarr;
+                              </button>
+                            </div>
+                          </div>
+                          <div className="lg:col-span-8 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {(siteConfig.targetParticipants.slice(targetIdx, targetIdx + 4)).map((tpItem, idx) => {
+                                const isObj = tpItem && typeof tpItem === 'object' && 'text' in tpItem;
+                                const text = isObj ? tpItem.text : String(tpItem);
+                                const imageUrl = isObj ? tpItem.imageUrl : '';
 
-              {/* SECTION: 7 LEARNING GOALS BAR */}
-              <section className="space-y-6">
-                <div className="text-center space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-[#a18241] uppercase tracking-widest block">LEARNING TARGETS MAP</span>
-                  <h2 className="font-serif text-2xl sm:text-3xl font-bold text-brand-blue">
-                    7 Sasaran Pembelajaran Utama JATC
-                  </h2>
-                  <p className="text-xs text-gray-500 max-w-lg mx-auto font-sans leading-relaxed">
-                    Sistem materi kurikulum kami didesain presisi untuk melampaui hambatan mental konvensional hingga Anda siap dinobatkan menjadi instruktur.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {siteConfig.learningGoals.map((lg) => (
-                    <div key={lg.id} className="bg-white rounded-xl border border-neutral-200/85 p-4 flex gap-3 shadow-sm hover:border-brand-gold hover:shadow transition-colors">
-                      <div className="text-lg font-mono font-bold text-[#a18241] bg-[#0b2240]/5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
-                        {lg.number}
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-[9px] font-mono font-bold text-gray-400 uppercase leading-none block select-none">
-                          Goal {lg.number}
-                        </span>
-                        <p className="text-xs font-sans text-neutral-800 font-semibold leading-normal">
-                          {lg.goal}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* SECTION: WHY IS ENGLISH IMPORTANT & WHY MILLIONS FAIL */}
-              <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 pt-4">
-                {/* 2A. Importance reasons (Modern Era requirements) */}
-                <div className="space-y-6">
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] font-bold text-[#a18241] font-mono tracking-widest block">MODERN ERA PERSPECTIVE</span>
-                    <h3 className="font-serif text-2xl font-bold text-brand-blue">
-                      Mengapa Penguasaan Bahasa Inggris Lebih Penting di Era Sekarang?
-                    </h3>
-                  </div>
-
-                  <div className="space-y-5">
-                    {siteConfig.importanceReasons.map((reason) => (
-                      <div key={reason.id} className="flex gap-4 p-4 rounded-xl hover:bg-neutral-50/70 transition-colors">
-                        <div className="p-3 bg-[#0b2240]/5 text-[#0b2240] rounded-xl h-fit shrink-0">
-                          {reason.iconName === 'Globe' && <Globe className="w-5 h-5 text-brand-blue" />}
-                          {reason.iconName === 'Briefcase' && <Briefcase className="w-5 h-5 text-brand-blue" />}
-                          {reason.iconName === 'BookOpen' && <BookOpen className="w-5 h-5 text-brand-blue" />}
+                                return (
+                                  <div 
+                                    key={idx} 
+                                    className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/15 p-5 flex gap-4 items-center shadow-md hover:border-brand-gold/60 hover:scale-[1.02] transition-all duration-300 hover:bg-white/15"
+                                  >
+                                    {imageUrl ? (
+                                      <img
+                                        src={imageUrl}
+                                        alt={text}
+                                        className="w-12 h-12 object-cover rounded-xl bg-neutral-900/40 border border-white/10 shrink-0"
+                                        referrerPolicy="no-referrer"
+                                      />
+                                    ) : (
+                                      <span className="text-sm font-mono font-bold text-brand-gold bg-white/10 w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+                                        ✓
+                                      </span>
+                                    )}
+                                    <p className="text-xs sm:text-[13px] font-sans text-white leading-relaxed font-bold flex-1">
+                                      {text}
+                                    </p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {siteConfig.targetParticipants.length > 4 && (
+                              <div className="text-right text-[10px] text-gray-400 font-mono italic mt-3 pr-1">
+                                Menampilkan {targetIdx + 1} s.d {Math.min(targetIdx + 4, siteConfig.targetParticipants.length)} dari {siteConfig.targetParticipants.length} sasaran
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="space-y-1">
-                          <h4 className="font-serif font-bold text-neutral-800 text-sm leading-snug">
-                            {reason.title}
-                          </h4>
-                          <p className="text-xs text-gray-500 font-sans leading-relaxed">
-                            {reason.description}
+                      </div>
+                    )}
+                  </section>
+
+                </div>
+              </div>
+
+              {/* SECTION: CLIENTS & PARTNERS AND MODERN ERA PERSPECTIVE WRAPPED WITH BACKGROUND KE-3 */}
+              <div 
+                className="rounded-3xl border border-white/10 p-5 sm:p-8 md:p-12 relative overflow-hidden shadow-2xl transition-all mt-12"
+                style={{
+                  backgroundImage: siteConfig.hero.backgroundImageUrl3 ? `url(${siteConfig.hero.backgroundImageUrl3})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              >
+                {/* Contrast overlay layer for excellent readability */}
+                <div className="absolute inset-0 bg-[#061427]/85 pointer-events-none" />
+
+                <div className="relative z-10 space-y-16">
+                  {/* SUB-SECTION: MITRA LEMBAGA YANG SUDAH IKUT PELATIHAN */}
+                  {siteConfig.institutions && siteConfig.institutions.length > 0 && (
+                    <div className="space-y-6">
+                      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                        <div className="space-y-2 max-w-2xl">
+                          <span className="text-[10px] font-mono font-bold text-brand-gold uppercase tracking-widest block">CLIENTS & PARTNERS</span>
+                          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white leading-tight">
+                            Lembaga & Instansi yang Telah Mengikuti Pelatihan JATC
+                          </h2>
+                          <p className="text-xs text-neutral-300 font-sans leading-relaxed">
+                            Dipercaya oleh kementerian negara, badan usaha milik negara (BUMN), korporasi swasta terkemuka, hingga institusi pendidikan tinggi nasional.
                           </p>
                         </div>
+
+                        {/* Navigation & View All Action Side */}
+                        <div className="flex items-center gap-3 shrink-0">
+                          {siteConfig.institutions.length > 4 && (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => {
+                                  const total = siteConfig.institutions?.length || 0;
+                                  setPartnerIdx(prev => (prev === 0 ? Math.max(0, total - 4) : prev - 1));
+                                }}
+                                className="w-10 h-10 rounded-full bg-brand-gold text-[#0b2240] hover:bg-brand-gold/85 transition-all flex items-center justify-center cursor-pointer shadow-md select-none"
+                                title="Sebelumnya"
+                              >
+                                <ChevronLeft className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const total = siteConfig.institutions?.length || 0;
+                                  setPartnerIdx(prev => (prev >= Math.max(0, total - 4) ? 0 : prev + 1));
+                                }}
+                                className="w-10 h-10 rounded-full bg-brand-gold text-[#0b2240] hover:bg-brand-gold/85 transition-all flex items-center justify-center cursor-pointer shadow-md select-none"
+                                title="Berikutnya"
+                              >
+                                <ChevronRight className="w-5 h-5" />
+                              </button>
+                            </div>
+                          )}
+                          <button
+                            onClick={() => setActiveTab('target-mitra')}
+                            className="px-4 py-2 border-2 border-brand-gold text-brand-gold font-sans font-bold hover:bg-brand-gold hover:text-[#0b2240] rounded-xl text-xs transition-all shadow-xs cursor-pointer"
+                          >
+                            Lihat Semua Mitra ({siteConfig.institutions.length})
+                          </button>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-stretch justify-items-center">
+                        {(siteConfig.institutions.slice(partnerIdx, partnerIdx + 4)).map((inst) => (
+                          <div
+                            key={inst.id}
+                            className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/15 p-5 w-full h-36 sm:h-40 flex flex-col items-center justify-center text-center gap-3 hover:border-brand-gold hover:shadow-lg hover:scale-[1.03] transition-all duration-300 relative overflow-hidden group shadow-sm text-white"
+                          >
+                            {inst.logoUrl ? (
+                              <div className="bg-white/95 p-1.5 rounded-xl flex items-center justify-center w-full h-16 sm:h-20 shadow-sm shrink-0">
+                                <img
+                                  src={inst.logoUrl}
+                                  alt={inst.name}
+                                  className="max-h-full max-w-full object-contain filter-none group-hover:scale-105 transition-all duration-300"
+                                  referrerPolicy="no-referrer"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-lg font-bold text-brand-gold border border-white/25 shrink-0">
+                                {inst.name.charAt(0)}
+                              </div>
+                            )}
+                            <span className="text-xs sm:text-sm font-sans font-extrabold text-white leading-tight px-1 select-none truncate w-full group-hover:text-brand-gold transition-colors">
+                              {inst.name}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {siteConfig.institutions.length > 4 && (
+                        <div className="text-right text-[10px] text-gray-400 font-mono italic pr-1">
+                          Menampilkan {partnerIdx + 1} s.d {Math.min(partnerIdx + 4, siteConfig.institutions.length)} dari {siteConfig.institutions.length} mitra terdaftar
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* SUB-SECTION: WHY IS ENGLISH IMPORTANT & WHY MILLIONS FAIL */}
+                  <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 pt-6 border-t border-white/10">
+                    {/* 2A. Importance reasons (Modern Era requirements) */}
+                    <div className="space-y-6">
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold text-brand-gold font-mono tracking-widest block">MODERN ERA PERSPECTIVE</span>
+                        <h3 className="font-serif text-2xl font-bold text-white">
+                          Mengapa Penguasaan Bahasa Inggris Lebih Penting di Era Sekarang?
+                        </h3>
+                      </div>
+
+                      <div className="space-y-5">
+                        {siteConfig.importanceReasons.map((reason) => (
+                          <div key={reason.id} className="flex gap-4 p-4 rounded-xl hover:bg-white/5 transition-colors">
+                            <div className="p-3 bg-brand-gold/10 text-brand-gold rounded-xl h-fit shrink-0 border border-brand-gold/20">
+                              {reason.iconName === 'Globe' && <Globe className="w-5 h-5 text-brand-gold" />}
+                              {reason.iconName === 'Briefcase' && <Briefcase className="w-5 h-5 text-brand-gold" />}
+                              {reason.iconName === 'BookOpen' && <BookOpen className="w-5 h-5 text-brand-gold" />}
+                              {reason.iconName === 'Award' && <Award className="w-5 h-5 text-brand-gold" />}
+                              {reason.iconName === 'Sparkles' && <Sparkles className="w-5 h-5 text-brand-gold" />}
+                              {reason.iconName === 'GraduationCap' && <GraduationCap className="w-5 h-5 text-brand-gold" />}
+                              {reason.iconName === 'Heart' && <Heart className="w-5 h-5 text-brand-gold" />}
+                              {reason.iconName === 'Bookmark' && <Bookmark className="w-5 h-5 text-brand-gold" />}
+                              {reason.iconName === 'Activity' && <Activity className="w-5 h-5 text-brand-gold" />}
+                              {!['Globe', 'Briefcase', 'BookOpen', 'Award', 'Sparkles', 'GraduationCap', 'Heart', 'Bookmark', 'Activity'].includes(reason.iconName) && <Globe className="w-5 h-5 text-brand-gold" />}
+                            </div>
+                            <div className="space-y-1">
+                              <h4 className="font-serif font-bold text-white text-sm leading-snug">
+                                {reason.title}
+                              </h4>
+                              <p className="text-xs text-gray-300 font-sans leading-relaxed">
+                                {reason.description}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 2B. Why learners Fail (Mindset Collision) */}
+                    <div className="bg-red-950/45 backdrop-blur-md border border-red-800/20 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md text-red-50">
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold text-red-400 font-mono tracking-widest block">PROBLEM IDENTIFICATION</span>
+                        <h3 className="font-serif text-2xl font-bold text-white">
+                          Mengapa Jutaan Pembelajar Indonesia Gagal Menguasai Bahasa Inggris?
+                        </h3>
+                      </div>
+
+                      <div className="space-y-3.5 text-xs text-red-100/95 leading-relaxed font-sans">
+                        <p className="border-b border-red-800/35 pb-3">
+                          Hambatan fundamental terbesar terletak pada kebiasaan menerapkan <span className="font-bold text-red-300">Mindset dan Paradigma Bahasa Indonesia</span> ke dalam Bahasa Inggris, padahal kedua struktur bahasa ini bertolak belakang secara signifikan.
+                        </p>
+
+                        <div className="space-y-3">
+                          {siteConfig.failureReasons.map((fail) => (
+                            <div key={fail.id} className="flex gap-3 items-start">
+                              <div className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 shrink-0" />
+                              <div>
+                                <span className="font-bold text-white">{fail.title}:</span>{' '}
+                                {fail.description}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="p-3.5 bg-red-900/40 rounded-xl border border-red-800/30 text-red-100 text-[11px] flex gap-2 font-medium">
+                          <HelpCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                          <span>Akibatnya: Progres terasa lambat karena otak terlalu letih melakukan penerjemahan ganda (translate in the head) setiap waktu.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
                 </div>
+              </div>
 
-                {/* 2B. Why learners Fail (Mindset Collision) */}
-                <div className="bg-red-50/40 border border-red-200/50 rounded-2xl p-6 sm:p-8 space-y-6">
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] font-bold text-[#b12230] font-mono tracking-widest block">PROBLEM IDENTIFICATION</span>
-                    <h3 className="font-serif text-2xl font-bold text-red-950">
-                      Mengapa Jutaan Pembelajar Indonesia Gagal Menguasai Bahasa Inggris?
-                    </h3>
-                  </div>
+              {/* SECTION: MR EDDY'S METHODOLOGIES */}
+              <div 
+                className="rounded-3xl border border-white/10 p-5 sm:p-8 md:p-12 relative overflow-hidden shadow-2xl transition-all mt-12"
+                style={{
+                  backgroundImage: siteConfig.hero.backgroundImageUrl4 ? `url(${siteConfig.hero.backgroundImageUrl4})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              >
+                {/* Contrast overlay layer for excellent readability */}
+                <div className="absolute inset-0 bg-[#061427]/85 pointer-events-none" />
 
-                  <div className="space-y-3.5 text-xs text-red-900/90 leading-relaxed font-sans">
-                    <p className="border-b border-red-200/50 pb-3">
-                      Hambatan fundamental terbesar terletak pada kebiasaan menerapkan <span className="font-bold">Mindset dan Paradigma Bahasa Indonesia</span> ke dalam Bahasa Inggris, padahal kedua struktur bahasa ini bertolak belakang secara signifikan.
-                    </p>
+                <div className="relative z-10 space-y-8">
+                  <section className="space-y-8 scroll-mt-24" id="methodology-section">
+                    <div className="text-center space-y-2 max-w-2xl mx-auto">
+                      <span className="text-[10px] font-mono font-bold text-brand-gold uppercase tracking-widest block">PRAGMATIC SOLUTIONS</span>
+                      <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white leading-tight">
+                        {siteConfig.methodologies.length} Metodologi Pengajaran Kontemporer
+                      </h2>
+                      <blockquote className="italic text-neutral-300 text-xs font-sans mt-1">
+                        Dirancang eksklusif oleh Drs. Eddy Sudarmadji MM., MBA., Dipl TEFL untuk menjembatani kesenjangan logika dan mental bahasa.
+                      </blockquote>
+                    </div>
 
-                    <div className="space-y-3">
-                      {siteConfig.failureReasons.map((fail) => (
-                        <div key={fail.id} className="flex gap-3 items-start">
-                          <div className="w-1.5 h-1.5 rounded-full bg-red-600 mt-1.5 shrink-0" />
-                          <div>
-                            <span className="font-bold text-red-950">{fail.title}:</span>{' '}
-                            {fail.description}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {siteConfig.methodologies.map((meth) => (
+                        <div key={meth.id} className="bg-white/15 backdrop-blur-md rounded-2xl border border-white/15 p-5 shadow-sm space-y-4 hover:border-brand-gold hover:bg-white/20 transition-all duration-300 flex flex-col justify-between text-white group">
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[9px] font-bold font-mono tracking-wide text-brand-gold uppercase">{meth.title}</span>
+                              <span className="text-[10px] font-mono bg-white/10 text-brand-gold px-2 py-0.5 rounded-md font-bold">JATC Method</span>
+                            </div>
+                            
+                            <h4 className="font-serif text-lg font-bold text-white leading-tight font-extrabold group-hover:text-brand-gold transition-colors">
+                              {meth.subtitle}
+                            </h4>
+                            
+                            <p className="text-xs text-neutral-200 leading-relaxed font-sans font-normal">
+                              {meth.description}
+                            </p>
+                          </div>
+
+                          <div className="pt-3 border-t border-white/10 space-y-1 text-[11px] font-sans">
+                            <span className="block font-bold text-white/55 font-mono text-[9px] uppercase">COCOK UNTUK:</span>
+                            <p className="text-brand-gold font-bold">{meth.forWho}</p>
                           </div>
                         </div>
                       ))}
                     </div>
-
-                    <div className="p-3.5 bg-red-100/40 rounded-xl border border-red-200 text-red-950 text-[11px] flex gap-2 font-medium">
-                      <HelpCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                      <span>Akibatnya: Progres terasa lambat karena otak terlalu letih melakukan penerjemahan ganda (translate in the head) setiap waktu.</span>
-                    </div>
-                  </div>
+                  </section>
                 </div>
-              </section>
-
-              {/* SECTION: MR EDDY'S METHODOLOGIES */}
-              <section className="space-y-8 pt-4 scroll-mt-24" id="methodology-section">
-                <div className="text-center space-y-1.5 max-w-2xl mx-auto">
-                  <span className="text-[10px] font-mono font-bold text-[#a18241] uppercase tracking-widest block">PRAGMATIC SOLUTIONS</span>
-                  <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#0b2240]">
-                    5 Metodologi Pengajaran Kontemporer
-                  </h2>
-                  <blockquote className="italic text-gray-500 text-xs font-sans mt-1">
-                    Dirancang eksklusif oleh Drs. Eddy Sudarmadji MM., MBA., Dipl TEFL untuk menjembatani kesenjangan logika dan mental bahasa.
-                  </blockquote>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {siteConfig.methodologies.map((meth) => (
-                    <div key={meth.id} className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm space-y-4 hover:border-brand-gold transition-colors flex flex-col justify-between">
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-[9px] font-bold font-mono tracking-wide text-brand-gold uppercase">{meth.title}</span>
-                          <span className="text-[10px] font-mono bg-brand-blue/5 text-brand-blue px-2 py-0.5 rounded-md font-bold">JATC Method</span>
-                        </div>
-                        
-                        <h4 className="font-serif text-lg font-bold text-brand-blue leading-tight">
-                          {meth.subtitle}
-                        </h4>
-                        
-                        <p className="text-xs text-gray-500 leading-relaxed font-sans font-normal">
-                          {meth.description}
-                        </p>
-                      </div>
-
-                      <div className="pt-3 border-t border-neutral-100 space-y-1 text-[11px] font-sans">
-                        <span className="block font-bold text-gray-400 font-mono text-[9px] uppercase">COCOK UNTUK:</span>
-                        <p className="text-amber-800 font-semibold">{meth.forWho}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
+              </div>
 
               {/* CTA BANNER */}
-              <section className="bg-gradient-to-r from-[#0b2240] to-[#123666] text-white rounded-3xl p-8 sm:p-12 text-center space-y-6 relative overflow-hidden">
+              <section className="bg-gradient-to-r from-[#0b2240] to-[#123666] text-white rounded-3xl p-8 sm:p-12 text-center space-y-6 relative overflow-hidden mt-8">
                 <div className="absolute right-0 bottom-0 pointer-events-none opacity-5 w-64 h-64 border-4 border-white rounded-full translate-x-12 translate-y-12" />
                 <div className="max-w-xl mx-auto space-y-4 relative z-10">
                   <span className="text-[10px] font-mono font-bold text-brand-gold uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">MITRA BELAJAR INDONESIA</span>
-                  <h3 className="font-serif text-2xl sm:text-3.5xl font-extrabold tracking-tight">Sudah Siap Menguasai Logika English untuk Karir Dunia?</h3>
+                  <h3 className="font-serif text-2xl sm:text-3.5xl font-extrabold tracking-tight text-white leading-tight">Sudah Siap Menguasai Logika English untuk Karir Dunia?</h3>
                   <p className="text-xs text-neutral-300 leading-relaxed font-sans">
-                    Dapatkan akses LMS gratis, 16 Tenses Simulator, serta ikuti webinar series yang bersertifikat resmi. Daftar kelayakan hanya kurang dari 2 menit.
+                    Dapatkan akses {(siteConfig.showLmsAndLive ?? true) ? 'LMS gratis, ' : ''}16 Tenses Simulator, serta ikuti {(siteConfig.showLmsAndLive ?? true) ? 'webinar series' : 'kelas intensif'} yang bersertifikat resmi. Daftar kelayakan hanya kurang dari 2 menit.
                   </p>
                   <div className="pt-2">
                     <button
                       onClick={() => setActiveTab('pendaftaran')}
-                      className="px-6 py-3 bg-[#c5a059] hover:bg-[#c5a059]/90 text-neutral-900 font-bold text-xs font-sans tracking-wide rounded-xl shadow-lg transition-all cursor-pointer"
+                      className="px-6 py-3 bg-[#c5a059] hover:bg-[#c5a059]/90 text-neutral-900 font-bold text-xs font-sans tracking-wide rounded-xl shadow-lg transition-all cursor-pointer animate-none"
                     >
                       Daftar Anggota Sekarang
                     </button>
                   </div>
                 </div>
               </section>
+
+            </motion.div>
+          )}
+
+          {/* ==================== TARGET & MITRA VIEW ==================== */}
+          {activeTab === 'target-mitra' && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-12"
+            >
+              {/* Page Header */}
+              <div className="bg-[#0b2240] text-white rounded-3xl p-8 sm:p-12 md:p-16 border border-white/10 relative overflow-hidden shadow-md">
+                <div className="absolute right-0 top-0 w-96 h-96 bg-[#c5a059]/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                <div className="relative space-y-4 max-w-2xl">
+                  <span className="text-xs font-mono font-bold text-brand-gold uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full">KUALIFIKASI & KEMITRAAN</span>
+                  <h1 className="font-serif text-3xl sm:text-4.5xl font-extrabold tracking-tight">Target Sasaran & Mitra Lembaga</h1>
+                  <p className="text-sm text-gray-200 font-sans leading-relaxed">
+                    Temukan sasaran kualifikasi peserta pelatihan JATC serta jaringan departemen pemerintah dan korporasi swasta mitra yang telah memercayakan program pembelajaran logis kami.
+                  </p>
+                </div>
+              </div>
+
+              {/* Section 1: Target Sasaran Pembelajaran (Full Grid) */}
+              {siteConfig.targetParticipants && siteConfig.targetParticipants.length > 0 && (
+                <div className="space-y-6">
+                  <div className="border-b border-neutral-200 pb-4">
+                    <h2 className="font-serif text-2xl sm:text-3xl font-bold text-brand-blue">
+                      Sasaran Kualifikasi Peserta Pelatihan
+                    </h2>
+                    <p className="text-sm text-gray-500 font-sans mt-1">
+                      Program JATC didesain khusus agar dapat diakomodasi oleh peserta dari berbagai jenjang kualifikasi dan target sasaran.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {siteConfig.targetParticipants.map((tpItem, idx) => {
+                      const isObj = tpItem && typeof tpItem === 'object' && 'text' in tpItem;
+                      const text = isObj ? tpItem.text : String(tpItem);
+                      const imageUrl = isObj ? tpItem.imageUrl : '';
+
+                      return (
+                        <div key={idx} className="bg-white rounded-3xl border-2 border-neutral-200/60 p-6 flex flex-col gap-4 shadow-xs hover:border-[#a18241]/45 hover:shadow-md transition-all duration-300">
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={text}
+                              className="w-full h-44 object-cover rounded-2xl bg-neutral-100 border border-neutral-200 shrink-0"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 font-bold text-xl shrink-0">
+                              ✓
+                            </div>
+                          )}
+                          <div className="space-y-1 flex-1 flex flex-col justify-between">
+                            <span className="text-[10px] font-mono font-bold text-gray-400 block tracking-wider uppercase">SASARAN #{idx + 1}</span>
+                            <p className="text-sm font-sans text-neutral-800 leading-relaxed font-bold mt-1">
+                              {text}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Section 2: Mitra Lembaga (Full Grid, enlarged) */}
+              {siteConfig.institutions && siteConfig.institutions.length > 0 && (
+                <div className="space-y-6 pt-6">
+                  <div className="border-b border-neutral-200 pb-4">
+                    <h2 className="font-serif text-2xl sm:text-3xl font-bold text-brand-blue">
+                      Jaringan Kemitraan Lembaga & Instansi
+                    </h2>
+                    <p className="text-sm text-gray-500 font-sans mt-1">
+                      Daftar lengkap kementerian negara, BUMN, institusi pendidikan tinggi, dan perusahaan swasta kredibel yang telah resmi berkolaborasi bersama JATC.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 items-stretch justify-items-center">
+                    {siteConfig.institutions.map((inst) => (
+                      <div
+                        key={inst.id}
+                        className="bg-white rounded-3xl border-2 border-neutral-200/60 p-6 w-full h-40 flex flex-col items-center justify-center text-center gap-3 hover:border-brand-gold hover:shadow-md transition-all duration-300 group shadow-sm"
+                      >
+                        {inst.logoUrl ? (
+                          <img
+                            src={inst.logoUrl}
+                            alt={inst.name}
+                            className="h-16 sm:h-20 max-w-full object-contain filter-none group-hover:scale-105 transition-all duration-300"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center text-lg font-bold text-[#a18241] border border-amber-200 shrink-0">
+                            {inst.name.charAt(0)}
+                          </div>
+                        )}
+                        <span className="text-xs sm:text-sm font-sans font-extrabold text-neutral-800 leading-tight px-1 select-none truncate w-full group-hover:text-brand-blue transition-colors">
+                          {inst.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -676,25 +1053,56 @@ export default function App() {
                 </div>
               </section>
 
-              {/* Legalitas & Kelayakan */}
-              <section className="bg-white rounded-2xl border border-neutral-200 p-8 sm:p-12 shadow-sm space-y-6">
+              {/* Sejarah & Dokumentasi Pendukung JATC */}
+              <section className="bg-white rounded-2xl border border-neutral-200 p-8 sm:p-12 shadow-sm space-y-8">
                 <div>
-                  <span className="text-[10px] font-mono font-bold text-brand-gold uppercase tracking-widest block">GOVERNMENT LEGITIMACY</span>
-                  <h3 className="font-serif text-2xl font-bold text-brand-blue">
-                    Legitimatitas Hukum & Kerja Koperasi
+                  <span className="text-[10px] font-mono font-bold text-brand-gold uppercase tracking-widest block">JATC TRAINING EVIDENCE</span>
+                  <h3 className="font-serif text-2xl sm:text-3xl font-bold text-brand-blue leading-tight">
+                    History & Dokumentasi Pendukung JATC
                   </h3>
-                  <p className="text-xs text-gray-400 mt-1">Kami terdaftar resmi di Kemenkumham RI serta berbadan hukum kredibel.</p>
+                  <p className="text-xs text-gray-500 mt-1 max-w-2xl font-sans leading-relaxed">
+                    Galeri foto aktivitas, pelatihan korporasi, seminar nasional, dan pengenalan metodologi pengajaran praktis sebagai bukti pendukung keberhasilan dari lembaga JOHN ANDERSEN TRAINING AND CONSULTING.
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {siteConfig.about.legalities.map((leg, idx) => (
-                    <div key={idx} className="p-4 bg-neutral-50 border border-neutral-250/50 rounded-xl flex items-center gap-3">
-                      <div className="p-2 bg-brand-blue/10 rounded-lg text-brand-blue shrink-0">
-                        <FileText className="w-4 h-4" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {siteConfig.about.history && siteConfig.about.history.length > 0 ? (
+                    siteConfig.about.history.map((hist) => (
+                      <div key={hist.id} className="group bg-neutral-50/75 border border-neutral-200/80 rounded-2xl overflow-hidden shadow-xs hover:border-brand-gold hover:shadow-md transition-all duration-300 flex flex-col h-full border-b-4 hover:border-b-brand-gold">
+                        <div className="aspect-video relative overflow-hidden bg-neutral-100 flex-shrink-0">
+                          {hist.imageUrl ? (
+                            <img
+                              src={hist.imageUrl}
+                              alt={hist.title}
+                              className="w-full h-full object-cover group-hover:scale-[1.04] transition-all duration-300"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-[#0b2240]/5 text-[#0b2240] text-xs font-mono">
+                              No Image Available
+                            </div>
+                          )}
+                          <div className="absolute top-3 left-3 bg-brand-gold text-[#0b2240] text-[10px] font-extrabold font-mono px-2 py-0.5 rounded shadow-sm">
+                            Tahun {hist.year}
+                          </div>
+                        </div>
+                        <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                          <div className="space-y-1.5">
+                            <h4 className="font-serif text-sm font-extrabold text-brand-blue leading-snug group-hover:text-brand-gold transition-colors duration-200 line-clamp-2">
+                              {hist.title}
+                            </h4>
+                            <p className="text-xs text-gray-500 font-sans leading-relaxed font-normal">
+                              {hist.description}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-xs font-sans font-medium text-neutral-800">{leg}</span>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-12 text-center text-gray-400 font-sans text-xs">
+                      Belum ada dokumentasi sejarah JATC. Silakan tambahkan melalui Akses Admin.
                     </div>
-                  ))}
+                  )}
                 </div>
               </section>
             </motion.div>
@@ -1115,13 +1523,10 @@ export default function App() {
                       onChange={(e) => setRegSession(e.target.value)}
                       className="w-full bg-yellow-500/5 hover:bg-yellow-500/10 border border-brand-gold/40 p-2.5 rounded-lg outline-none font-sans font-bold text-[#a18241]"
                     >
-                      {sessions.length === 0 ? (
-                        <option value="Sesi Default">Belum ada sesi aktif, silakan atur di admin panel.</option>
-                      ) : (
-                        sessions.map(s => (
-                          <option key={s.id} value={s.title}>{s.title} ({s.dateTime})</option>
-                        ))
-                      )}
+                      <option value="">-- Belajar Mandiri (Tanpa Jadwal Sesi / Webinar) --</option>
+                      {sessions.map(s => (
+                        <option key={s.id} value={s.title}>{s.title} ({s.dateTime})</option>
+                      ))}
                     </select>
                   </div>
 
@@ -1162,12 +1567,14 @@ export default function App() {
                         {loggedInMember.name}
                       </div>
                       <div className="text-[10px] text-gray-400 font-mono">
-                        {loggedInMember.email} • {loggedInMember.selectedSession}
+                        {loggedInMember.email}{loggedInMember.selectedSession ? ` • ${loggedInMember.selectedSession}` : ''}
                       </div>
                     </div>
-                    <div className="bg-[#0b2240]/5 p-3 rounded-lg border text-[11px] text-[#a18241] font-sans">
-                      Akses Materi Pembelajaran LMS kini telah dibuka secara penuh. Sila klik menu <span className="font-bold underline cursor-pointer" onClick={() => setActiveTab('lms')}>"Materi LMS & Live"</span>.
-                    </div>
+                    {(siteConfig.showLmsAndLive ?? true) && (
+                      <div className="bg-[#0b2240]/5 p-3 rounded-lg border text-[11px] text-[#a18241] font-sans">
+                        Akses Materi Pembelajaran LMS kini telah dibuka secara penuh. Sila klik menu <span className="font-bold underline cursor-pointer" onClick={() => setActiveTab('lms')}>"Materi LMS & Live"</span>.
+                      </div>
+                    )}
                     <button
                       onClick={handleMemberLogout}
                       className="w-full py-2 bg-red-50 text-red-700 hover:bg-red-100/80 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer"
@@ -1283,26 +1690,30 @@ export default function App() {
                     >
                       👤 Akun & Sertifikasi
                     </button>
-                    <button
-                      onClick={() => setMemberSubTab('lms')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${
-                        memberSubTab === 'lms'
-                          ? 'bg-[#0b2240] text-white'
-                          : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-600'
-                      }`}
-                    >
-                      📚 Materi Kurikulum LMS
-                    </button>
-                    <button
-                      onClick={() => setMemberSubTab('webinar')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${
-                        memberSubTab === 'webinar'
-                          ? 'bg-[#0b2240] text-white'
-                          : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-600'
-                      }`}
-                    >
-                      📅 Informasi Webinar & Live
-                    </button>
+                    {(siteConfig.showLmsAndLive ?? true) && (
+                      <>
+                        <button
+                          onClick={() => setMemberSubTab('lms')}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${
+                            memberSubTab === 'lms'
+                              ? 'bg-[#0b2240] text-white'
+                              : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-600'
+                          }`}
+                        >
+                          📚 Materi Kurikulum LMS
+                        </button>
+                        <button
+                          onClick={() => setMemberSubTab('webinar')}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${
+                            memberSubTab === 'webinar'
+                              ? 'bg-[#0b2240] text-white'
+                              : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-600'
+                          }`}
+                        >
+                          📅 Informasi Webinar & Live
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   {/* Tab Contents */}
@@ -2009,7 +2420,9 @@ export default function App() {
               <button onClick={() => setActiveTab('beranda')} className="text-left text-neutral-400 hover:text-white transition-colors cursor-pointer">Landing Utama</button>
               <button onClick={() => setActiveTab('tentang')} className="text-left text-neutral-400 hover:text-white transition-colors cursor-pointer">Tentang Trainer</button>
               <button onClick={() => setActiveTab('tenses')} className="text-left text-neutral-400 hover:text-white transition-colors cursor-pointer">16 Tenses Hub</button>
-              <button onClick={() => setActiveTab('lms')} className="text-left text-neutral-400 hover:text-white transition-colors cursor-pointer">Materi LMS</button>
+              {(siteConfig.showLmsAndLive ?? true) && (
+                <button onClick={() => setActiveTab('lms')} className="text-left text-neutral-400 hover:text-white transition-colors cursor-pointer">Materi LMS</button>
+              )}
               <button onClick={() => setActiveTab('berita')} className="text-left text-neutral-400 hover:text-white transition-colors cursor-pointer">Forum & Tips</button>
               <button onClick={() => setActiveTab('pendaftaran')} className="text-left text-neutral-400 hover:text-white transition-colors cursor-pointer">Daftar Anggota</button>
             </div>
@@ -2034,7 +2447,7 @@ export default function App() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-neutral-800 mt-8 pt-4 text-center text-[10px] text-neutral-500 font-mono">
           <p>© 2026 JOHN ANDERSEN TRAINING AND CONSULTING INDONESIA. Drs. Eddy Sudarmadji MM.,MBA.,Dipl TEFL. All Rights Reserved. </p>
-          <p className="mt-1">SK Kemenkumham RI: AHU-0034912.AH.01.01.TAHUN 2024 • NIB: 1209328401349</p>
+          <p className="mt-1">Surat Ijin Usaha Perdagangan (SIUP) Nomor : 510/1-BF46/BPPT, Bandung : 03 November 2014</p>
         </div>
       </footer>
     </div>
