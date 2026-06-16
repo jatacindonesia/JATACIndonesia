@@ -23,6 +23,11 @@ import {
   setDoc,
   deleteDoc
 } from 'firebase/firestore';
+import {
+  saveToLocalStorage,
+  loadFromLocalStorage,
+  fetchAllDbData
+} from './lib/database';
 
 // Data & Modules
 import {
@@ -50,59 +55,36 @@ export default function App() {
 
   // Global Multi-State with LocalStorage persistence
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
-    const local = localStorage.getItem('jatc_site_config');
-    if (local) {
-      try {
-        const parsed = JSON.parse(local);
-        if (!parsed.hero) {
-          parsed.hero = { ...INITIAL_SITE_CONFIG.hero };
-        }
-        if (!parsed.hero.backgroundImageUrl) {
-          parsed.hero.backgroundImageUrl = "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&q=85&w=1800";
-        }
-        if (!parsed.hero.backgroundImageUrl2) {
-          parsed.hero.backgroundImageUrl2 = "https://images.unsplash.com/photo-1518235506717-e1ed3306a89b?auto=format&fit=crop&q=85&w=1800";
-        }
-        if (!parsed.hero.backgroundImageUrl3) {
-          parsed.hero.backgroundImageUrl3 = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=85&w=1800";
-        }
-        if (!parsed.hero.backgroundImageUrl4) {
-          parsed.hero.backgroundImageUrl4 = "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=85&w=1800";
-        }
-        if (parsed.about && (!parsed.about.history || parsed.about.history.length === 0)) {
-          parsed.about.history = [...(INITIAL_SITE_CONFIG.about.history || [])];
-        }
-        return parsed;
-      } catch (e) {
-        return INITIAL_SITE_CONFIG;
-      }
+    const parsed = loadFromLocalStorage<SiteConfig>('jatc_site_config', INITIAL_SITE_CONFIG);
+    if (!parsed || !parsed.hero) return INITIAL_SITE_CONFIG;
+    if (!parsed.hero.backgroundImageUrl) parsed.hero.backgroundImageUrl = INITIAL_SITE_CONFIG.hero.backgroundImageUrl;
+    if (!parsed.hero.backgroundImageUrl2) parsed.hero.backgroundImageUrl2 = INITIAL_SITE_CONFIG.hero.backgroundImageUrl2;
+    if (!parsed.hero.backgroundImageUrl3) parsed.hero.backgroundImageUrl3 = INITIAL_SITE_CONFIG.hero.backgroundImageUrl3;
+    if (!parsed.hero.backgroundImageUrl4) parsed.hero.backgroundImageUrl4 = INITIAL_SITE_CONFIG.hero.backgroundImageUrl4;
+    if (!parsed.about || !parsed.about.history || parsed.about.history.length === 0) {
+      parsed.about = { ...INITIAL_SITE_CONFIG.about };
     }
-    return INITIAL_SITE_CONFIG;
+    return parsed;
   });
 
   const [members, setMembers] = useState<Member[]>(() => {
-    const local = localStorage.getItem('jatc_members');
-    return local ? JSON.parse(local) : [];
+    return loadFromLocalStorage<Member[]>('jatc_members', []);
   });
 
   const [sessions, setSessions] = useState<LearningSession[]>(() => {
-    const local = localStorage.getItem('jatc_sessions');
-    return local ? JSON.parse(local) : INITIAL_SESSIONS;
+    return loadFromLocalStorage<LearningSession[]>('jatc_sessions', INITIAL_SESSIONS);
   });
 
   const [articles, setArticles] = useState<Article[]>(() => {
-    const local = localStorage.getItem('jatc_articles');
-    return local ? JSON.parse(local) : INITIAL_ARTICLES;
+    return loadFromLocalStorage<Article[]>('jatc_articles', INITIAL_ARTICLES);
   });
 
   const [gallery, setGallery] = useState<GalleryItem[]>(() => {
-    const local = localStorage.getItem('jatc_gallery');
-    return local ? JSON.parse(local) : INITIAL_GALLERY;
+    return loadFromLocalStorage<GalleryItem[]>('jatc_gallery', INITIAL_GALLERY);
   });
 
   const [lmsModules, setLmsModules] = useState<LMSModule[]>(() => {
-    const local = localStorage.getItem('jatc_lms_modules');
-    return local ? JSON.parse(local) : INITIAL_LMS_MODULES;
+    return loadFromLocalStorage<LMSModule[]>('jatc_lms_modules', INITIAL_LMS_MODULES);
   });
 
   // Client Session States (Auth for Members)
@@ -243,23 +225,65 @@ export default function App() {
     async function initDatabase() {
       try {
         await testConnection();
-        // Check if DB configuration document is present on Firestore. If not, seed Firestore first!
-        const existingConfig = await fetchSiteConfig();
-        if (!existingConfig) {
+        // Step 1: Bulk fetch initial data from Firestore to prevent default states race conditions
+        const cloudData = await fetchAllDbData();
+
+        if (!cloudData.siteConfig) {
           console.log("Firestore is completely empty. Seeding JATC defaults straight to the cloud...");
           await uploadFullAppDb({
-            siteConfig: siteConfig || INITIAL_SITE_CONFIG,
-            members: members || [],
-            sessions: sessions || INITIAL_SESSIONS,
-            articles: articles || INITIAL_ARTICLES,
-            gallery: gallery || INITIAL_GALLERY,
-            lmsModules: lmsModules || INITIAL_LMS_MODULES
+            siteConfig: INITIAL_SITE_CONFIG,
+            members: [],
+            sessions: INITIAL_SESSIONS,
+            articles: INITIAL_ARTICLES,
+            gallery: INITIAL_GALLERY,
+            lmsModules: INITIAL_LMS_MODULES
           });
+          // Set UI states & update tracking refs after seeding
+          setSiteConfig(INITIAL_SITE_CONFIG);
+          prevSiteConfigRef.current = INITIAL_SITE_CONFIG;
+          setMembers([]);
+          prevMembersRef.current = [];
+          setSessions(INITIAL_SESSIONS);
+          prevSessionsRef.current = INITIAL_SESSIONS;
+          setArticles(INITIAL_ARTICLES);
+          prevArticlesRef.current = INITIAL_ARTICLES;
+          setGallery(INITIAL_GALLERY);
+          prevGalleryRef.current = INITIAL_GALLERY;
+          setLmsModules(INITIAL_LMS_MODULES);
+          prevLmsModulesRef.current = INITIAL_LMS_MODULES;
+        } else {
+          // Cloud data already exists. Safely update UI states & tracking refs immediately.
+          setSiteConfig(cloudData.siteConfig);
+          prevSiteConfigRef.current = cloudData.siteConfig;
+
+          if (cloudData.members) {
+            const sortedMembers = [...cloudData.members].sort((a, b) => new Date(b.registeredAt || 0).getTime() - new Date(a.registeredAt || 0).getTime());
+            setMembers(sortedMembers);
+            prevMembersRef.current = sortedMembers;
+          }
+          if (cloudData.sessions) {
+            setSessions(cloudData.sessions);
+            prevSessionsRef.current = cloudData.sessions;
+          }
+          if (cloudData.articles) {
+            const sortedArticles = [...cloudData.articles].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+            setArticles(sortedArticles);
+            prevArticlesRef.current = sortedArticles;
+          }
+          if (cloudData.gallery) {
+            setGallery(cloudData.gallery);
+            prevGalleryRef.current = cloudData.gallery;
+          }
+          if (cloudData.lmsModules) {
+            setLmsModules(cloudData.lmsModules);
+            prevLmsModulesRef.current = cloudData.lmsModules;
+          }
         }
       } catch (err) {
         console.warn("Layanan Cloud Firestore tidak terhubung sempurna, mencoba menyambungkan via snapshots...", err);
       }
 
+      // Step 2: Register Realtime Listeners to propagate updates instantly across devices
       // 1. Live Sync Site Config
       const unsubConfig = onSnapshot(doc(db, 'config', 'site'), (snap) => {
         if (snap.exists()) {
@@ -341,6 +365,7 @@ export default function App() {
       });
       unsubs.push(unsubLms);
 
+      // Mark database sync as loaded to safely activate write modifications
       setDataLoaded(true);
     }
 

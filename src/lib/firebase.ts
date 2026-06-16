@@ -11,13 +11,13 @@ import {
   deleteDoc,
   getDocFromServer
 } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+import { FIREBASE_CONFIG } from './config';
 
 // Initialize Firebase App
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(FIREBASE_CONFIG);
 
 // Initialize Firestore with Database ID (Critical step)
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app, FIREBASE_CONFIG.firestoreDatabaseId);
 export const auth = getAuth();
 
 // Verification helper for startup connection
