@@ -47,24 +47,67 @@ import DiscussionForum from './components/DiscussionForum';
 import LMSPortal from './components/LMSPortal';
 import AdminPanel from './components/AdminPanel';
 
+const EMPTY_SITE_CONFIG: SiteConfig = {
+  hero: {
+    companyName: "JATC Indonesia",
+    tagline: "",
+    subtitle: "",
+    trainerName: "",
+    trainerTitle: "",
+    backgroundImageUrl: "",
+    backgroundImageUrl2: "",
+    backgroundImageUrl3: "",
+    backgroundImageUrl4: "",
+    webinarSeriesTitle: "",
+    webinarDuration: "",
+    certificateNote: "",
+    webinarParts: []
+  },
+  about: {
+    profile: "",
+    vision: "",
+    mission: [],
+    trainerBio: {
+      photoUrl: "",
+      details: []
+    },
+    legalities: [],
+    history: []
+  },
+  contact: {
+    officeAddress: "",
+    whatsappNumber: "",
+    operationalHours: ""
+  },
+  certificate: {
+    signatureName: "",
+    signatureRole: "",
+    backgroundStyle: "abstract-soft",
+    logoUrl: "",
+    rightLogoUrl: "",
+    signatureUrl: "",
+    issueDate: ""
+  },
+  importanceReasons: [],
+  failureReasons: [],
+  learningGoals: [],
+  learningGoalsSubtitle: "",
+  learningGoalsArrowUrl: "",
+  methodologies: [],
+  showLmsAndLive: true,
+  targetParticipants: [],
+  institutions: []
+};
+
 export default function App() {
   // Navigation tabs
   // 'beranda' | 'tentang' | 'tenses' | 'lms' | 'berita' | 'koperasi' | 'pendaftaran' | 'admin'
   const [activeTab, setActiveTab] = useState<string>('beranda');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Global Multi-State with LocalStorage persistence
+  // Global Multi-State with LocalStorage persistence initialized clean
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
-    const parsed = loadFromLocalStorage<SiteConfig>('jatc_site_config', INITIAL_SITE_CONFIG);
-    if (!parsed || !parsed.hero) return INITIAL_SITE_CONFIG;
-    if (!parsed.hero.backgroundImageUrl) parsed.hero.backgroundImageUrl = INITIAL_SITE_CONFIG.hero.backgroundImageUrl;
-    if (!parsed.hero.backgroundImageUrl2) parsed.hero.backgroundImageUrl2 = INITIAL_SITE_CONFIG.hero.backgroundImageUrl2;
-    if (!parsed.hero.backgroundImageUrl3) parsed.hero.backgroundImageUrl3 = INITIAL_SITE_CONFIG.hero.backgroundImageUrl3;
-    if (!parsed.hero.backgroundImageUrl4) parsed.hero.backgroundImageUrl4 = INITIAL_SITE_CONFIG.hero.backgroundImageUrl4;
-    if (!parsed.about || !parsed.about.history || parsed.about.history.length === 0) {
-      parsed.about = { ...INITIAL_SITE_CONFIG.about };
-    }
-    return parsed;
+    return loadFromLocalStorage<SiteConfig>('jatc_site_config', EMPTY_SITE_CONFIG);
   });
 
   const [members, setMembers] = useState<Member[]>(() => {
@@ -72,19 +115,19 @@ export default function App() {
   });
 
   const [sessions, setSessions] = useState<LearningSession[]>(() => {
-    return loadFromLocalStorage<LearningSession[]>('jatc_sessions', INITIAL_SESSIONS);
+    return loadFromLocalStorage<LearningSession[]>('jatc_sessions', []);
   });
 
   const [articles, setArticles] = useState<Article[]>(() => {
-    return loadFromLocalStorage<Article[]>('jatc_articles', INITIAL_ARTICLES);
+    return loadFromLocalStorage<Article[]>('jatc_articles', []);
   });
 
   const [gallery, setGallery] = useState<GalleryItem[]>(() => {
-    return loadFromLocalStorage<GalleryItem[]>('jatc_gallery', INITIAL_GALLERY);
+    return loadFromLocalStorage<GalleryItem[]>('jatc_gallery', []);
   });
 
   const [lmsModules, setLmsModules] = useState<LMSModule[]>(() => {
-    return loadFromLocalStorage<LMSModule[]>('jatc_lms_modules', INITIAL_LMS_MODULES);
+    return loadFromLocalStorage<LMSModule[]>('jatc_lms_modules', []);
   });
 
   // Client Session States (Auth for Members)
@@ -130,6 +173,97 @@ export default function App() {
   const [partnerIdx, setPartnerIdx] = useState(0);
 
   const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Cloud write wrapper functions that do instant, bulletproof persistence
+  const handleSiteConfigChange = async (next: SiteConfig) => {
+    setSiteConfig(next);
+    localStorage.setItem('jatc_site_config', JSON.stringify(next));
+    try {
+      await setDoc(doc(db, 'config', 'site'), { siteConfig: next, lastUpdated: new Date().toISOString() }, { merge: true });
+    } catch (e) {
+      console.error("Gagal menyimpan siteConfig ke Firestore:", e);
+    }
+  };
+
+  const handleMembersChange = async (next: Member[]) => {
+    setMembers(next);
+    localStorage.setItem('jatc_members', JSON.stringify(next));
+    try {
+      const deleted = members.filter(x => !next.some(y => y.id === x.id));
+      for (const item of deleted) {
+        if (item.id) await deleteDoc(doc(db, 'members', item.id));
+      }
+      for (const item of next) {
+        if (item.id) await setDoc(doc(db, 'members', item.id), item, { merge: true });
+      }
+    } catch (e) {
+      console.error("Gagal menyimpan members ke Firestore:", e);
+    }
+  };
+
+  const handleSessionsChange = async (next: LearningSession[]) => {
+    setSessions(next);
+    localStorage.setItem('jatc_sessions', JSON.stringify(next));
+    try {
+      const deleted = sessions.filter(x => !next.some(y => y.id === x.id));
+      for (const item of deleted) {
+        if (item.id) await deleteDoc(doc(db, 'sessions', item.id));
+      }
+      for (const item of next) {
+        if (item.id) await setDoc(doc(db, 'sessions', item.id), item, { merge: true });
+      }
+    } catch (e) {
+      console.error("Gagal menyimpan sessions ke Firestore:", e);
+    }
+  };
+
+  const handleArticlesChange = async (next: Article[]) => {
+    setArticles(next);
+    localStorage.setItem('jatc_articles', JSON.stringify(next));
+    try {
+      const deleted = articles.filter(x => !next.some(y => y.id === x.id));
+      for (const item of deleted) {
+        if (item.id) await deleteDoc(doc(db, 'articles', item.id));
+      }
+      for (const item of next) {
+        if (item.id) await setDoc(doc(db, 'articles', item.id), item, { merge: true });
+      }
+    } catch (e) {
+      console.error("Gagal menyimpan articles ke Firestore:", e);
+    }
+  };
+
+  const handleGalleryChange = async (next: GalleryItem[]) => {
+    setGallery(next);
+    localStorage.setItem('jatc_gallery', JSON.stringify(next));
+    try {
+      const deleted = gallery.filter(x => !next.some(y => y.id === x.id));
+      for (const item of deleted) {
+        if (item.id) await deleteDoc(doc(db, 'gallery', item.id));
+      }
+      for (const item of next) {
+        if (item.id) await setDoc(doc(db, 'gallery', item.id), item, { merge: true });
+      }
+    } catch (e) {
+      console.error("Gagal menyimpan gallery ke Firestore:", e);
+    }
+  };
+
+  const handleLmsModulesChange = async (next: LMSModule[]) => {
+    setLmsModules(next);
+    localStorage.setItem('jatc_lms_modules', JSON.stringify(next));
+    try {
+      const deleted = lmsModules.filter(x => !next.some(y => y.id === x.id));
+      for (const item of deleted) {
+        if (item.id) await deleteDoc(doc(db, 'lmsModules', item.id));
+      }
+      for (const item of next) {
+        if (item.id) await setDoc(doc(db, 'lmsModules', item.id), item, { merge: true });
+      }
+    } catch (e) {
+      console.error("Gagal menyimpan lmsModules ke Firestore:", e);
+    }
+  };
 
   // Stable state tracking to prevent overwriting cloud storage with stale local values on startup
   const prevSiteConfigRef = useRef<SiteConfig | null>(null);
@@ -229,28 +363,19 @@ export default function App() {
         const cloudData = await fetchAllDbData();
 
         if (!cloudData.siteConfig) {
-          console.log("Firestore is completely empty. Seeding JATC defaults straight to the cloud...");
-          await uploadFullAppDb({
-            siteConfig: INITIAL_SITE_CONFIG,
-            members: [],
-            sessions: INITIAL_SESSIONS,
-            articles: INITIAL_ARTICLES,
-            gallery: INITIAL_GALLERY,
-            lmsModules: INITIAL_LMS_MODULES
-          });
-          // Set UI states & update tracking refs after seeding
-          setSiteConfig(INITIAL_SITE_CONFIG);
-          prevSiteConfigRef.current = INITIAL_SITE_CONFIG;
+          console.log("Firestore is empty. Starting with clean empty states as requested.");
+          setSiteConfig(EMPTY_SITE_CONFIG);
+          prevSiteConfigRef.current = EMPTY_SITE_CONFIG;
           setMembers([]);
           prevMembersRef.current = [];
-          setSessions(INITIAL_SESSIONS);
-          prevSessionsRef.current = INITIAL_SESSIONS;
-          setArticles(INITIAL_ARTICLES);
-          prevArticlesRef.current = INITIAL_ARTICLES;
-          setGallery(INITIAL_GALLERY);
-          prevGalleryRef.current = INITIAL_GALLERY;
-          setLmsModules(INITIAL_LMS_MODULES);
-          prevLmsModulesRef.current = INITIAL_LMS_MODULES;
+          setSessions([]);
+          prevSessionsRef.current = [];
+          setArticles([]);
+          prevArticlesRef.current = [];
+          setGallery([]);
+          prevGalleryRef.current = [];
+          setLmsModules([]);
+          prevLmsModulesRef.current = [];
         } else {
           // Cloud data already exists. Safely update UI states & tracking refs immediately.
           setSiteConfig(cloudData.siteConfig);
@@ -401,42 +526,6 @@ export default function App() {
     localStorage.setItem('jatc_lms_modules', JSON.stringify(lmsModules));
   }, [lmsModules]);
 
-  // A single unified sync function that debounces cloud writes to prevent race conditions on multi-device use
-  useEffect(() => {
-    if (!dataLoaded) return;
-
-    // Detect actual structural/identity modification after initial mount hydration
-    let hasChanged = false;
-    if (prevSiteConfigRef.current && prevSiteConfigRef.current !== siteConfig) hasChanged = true;
-    if (prevMembersRef.current && prevMembersRef.current !== members) hasChanged = true;
-    if (prevSessionsRef.current && prevSessionsRef.current !== sessions) hasChanged = true;
-    if (prevArticlesRef.current && prevArticlesRef.current !== articles) hasChanged = true;
-    if (prevGalleryRef.current && prevGalleryRef.current !== gallery) hasChanged = true;
-    if (prevLmsModulesRef.current && prevLmsModulesRef.current !== lmsModules) hasChanged = true;
-
-    if (!hasChanged) return;
-
-    const delayDebounce = setTimeout(() => {
-      saveToServer({
-        siteConfig,
-        members,
-        sessions,
-        articles,
-        gallery,
-        lmsModules
-      });
-      // Stabilize tracking references
-      prevSiteConfigRef.current = siteConfig;
-      prevMembersRef.current = members;
-      prevSessionsRef.current = sessions;
-      prevArticlesRef.current = articles;
-      prevGalleryRef.current = gallery;
-      prevLmsModulesRef.current = lmsModules;
-    }, 1000); // 1-second debounce to batch multiple updates and prevent parallel write collisions
-
-    return () => clearTimeout(delayDebounce);
-  }, [siteConfig, members, sessions, articles, gallery, lmsModules, dataLoaded]);
-
   useEffect(() => {
     if (loggedInMember) {
       localStorage.setItem('jatc_logged_member', JSON.stringify(loggedInMember));
@@ -446,18 +535,18 @@ export default function App() {
   }, [loggedInMember]);
 
   // Handle defaults restore
-  const handleResetToDefaults = () => {
+  const handleResetToDefaults = async () => {
     if (confirm('Apakah Anda yakin ingin mengembalikan seluruh website ke konfigurasi original bawaan pabrik? (Seluruh pendaftar baru tidak akan hilang)')) {
-      setSiteConfig(INITIAL_SITE_CONFIG);
-      setSessions(INITIAL_SESSIONS);
-      setArticles(INITIAL_ARTICLES);
-      setGallery(INITIAL_GALLERY);
+      await handleSiteConfigChange(INITIAL_SITE_CONFIG);
+      await handleSessionsChange(INITIAL_SESSIONS);
+      await handleArticlesChange(INITIAL_ARTICLES);
+      await handleGalleryChange(INITIAL_GALLERY);
       alert('Website berhasil di-reset ke original!');
     }
   };
 
   // Submit Member Registration
-  const handleRegistrationSubmit = (e: React.FormEvent) => {
+  const handleRegistrationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!regPhone || !regEmail || !regName || !regPassword) {
       alert("Sila isi seluruh bidang dengan benar, termasuk password akun Anda.");
@@ -490,7 +579,7 @@ export default function App() {
     };
 
     const updatedMembers = [...members, newMember];
-    setMembers(updatedMembers);
+    await handleMembersChange(updatedMembers);
 
     // Auto log-in student
     setLoggedInMember(newMember);
@@ -2586,19 +2675,19 @@ export default function App() {
                 // ADMIN PANEL
                 <AdminPanel
                   siteConfig={siteConfig}
-                  setSiteConfig={setSiteConfig}
+                  setSiteConfig={handleSiteConfigChange}
                   members={members}
-                  setMembers={setMembers}
+                  setMembers={handleMembersChange}
                   sessions={sessions}
-                  setSessions={setSessions}
+                  setSessions={handleSessionsChange}
                   articles={articles}
-                  setArticles={setArticles}
+                  setArticles={handleArticlesChange}
                   gallery={gallery}
-                  setGallery={setGallery}
+                  setGallery={handleGalleryChange}
                   onResetToDefaults={handleResetToDefaults}
                   onLogout={() => setIsAdminLoggedIn(false)}
                   lmsModules={lmsModules}
-                  setLmsModules={setLmsModules}
+                  setLmsModules={handleLmsModulesChange}
                 />
               ) : (
                 // DUAL LOGIN FORMS
