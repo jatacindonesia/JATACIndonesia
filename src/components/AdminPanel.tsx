@@ -29,7 +29,7 @@ export function compressImage(file: File, maxWidth = 1200, maxHeight = 800, qual
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (event) => {
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let width = img.width;
