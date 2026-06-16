@@ -497,14 +497,24 @@ export default function App() {
 
                   {/* SECTION: 7 LEARNING GOALS BAR */}
                   <section className="space-y-6">
-                    <div className="text-center space-y-1.5">
-                      <span className="text-[10px] font-mono font-bold text-brand-gold uppercase tracking-widest block">LEARNING TARGETS MAP</span>
-                      <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
-                        {siteConfig.learningGoals.length} Sasaran Pembelajaran Utama JATC
-                      </h2>
-                      <p className="text-xs text-gray-300 max-w-lg mx-auto font-sans leading-relaxed">
-                        Sistem materi kurikulum kami didesain presisi untuk melampaui hambatan mental konvensional hingga Anda siap dinobatkan menjadi instruktur.
-                      </p>
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-6 max-w-4xl mx-auto">
+                      <div className="shrink-0 flex items-center justify-center">
+                        <img 
+                          src={siteConfig.learningGoalsArrowUrl || "/tribal_arrow.jpg"} 
+                          alt="Tribal Arrow JATC" 
+                          className="w-28 sm:w-36 md:w-44 h-auto object-contain hover:scale-105 transition-all duration-300 pointer-events-none mix-blend-multiply bg-transparent"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                      <div className="text-center md:text-left space-y-1.5 flex-1">
+                        <span className="text-[10px] font-mono font-bold text-brand-gold uppercase tracking-widest block font-sans">LEARNING TARGETS MAP</span>
+                        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white leading-tight">
+                          {siteConfig.learningGoals.length} Sasaran Pembelajaran Utama JATC
+                        </h2>
+                        <p className="text-xs text-neutral-300 font-sans leading-relaxed">
+                          {siteConfig.learningGoalsSubtitle || "Sistem materi kurikulum kami didesain presisi untuk melampaui hambatan mental konvensional hingga Anda siap dinobatkan menjadi instruktur."}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

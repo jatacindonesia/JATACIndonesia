@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SiteConfig, Member, LearningSession, Article, GalleryItem, LMSModule, TargetParticipantConfig, JatcHistoryItem } from '../types';
 import {
-  Settings, Users, Calendar, BookOpen, VolumeX, CheckCircle, XCircle, Trash2, Edit3, Plus, X,
+  Settings, Users, Calendar, BookOpen, VolumeX, CheckCircle, XCircle, Trash2, Edit3, Edit, Plus, X,
   Save, RefreshCw, LogOut, Lock, Download, Printer, Layers, Info, Check, Image, Video,
   Globe, Briefcase, Sparkles, GraduationCap, Heart, Bookmark, Activity, HelpCircle,
   Sliders, Eye, Building
@@ -73,10 +73,22 @@ export default function AdminPanel({
   const [importanceReasons, setImportanceReasons] = useState(siteConfig.importanceReasons || []);
   const [failureReasons, setFailureReasons] = useState(siteConfig.failureReasons || []);
   const [learningGoals, setLearningGoals] = useState(siteConfig.learningGoals || []);
+  const [learningGoalsSubtitle, setLearningGoalsSubtitle] = useState(siteConfig.learningGoalsSubtitle || '');
+  const [learningGoalsArrowUrl, setLearningGoalsArrowUrl] = useState(siteConfig.learningGoalsArrowUrl || '/tribal_arrow.jpg');
   const [methodologies, setMethodologies] = useState(siteConfig.methodologies || []);
   const [showLmsAndLive, setShowLmsAndLive] = useState(siteConfig.showLmsAndLive ?? true);
   const [targetParticipants, setTargetParticipants] = useState(siteConfig.targetParticipants || []);
   const [institutions, setInstitutions] = useState(siteConfig.institutions || []);
+
+  // Inline edit state toggles
+  const [editingHistId, setEditingHistId] = useState<string | null>(null);
+  const [editingTpId, setEditingTpId] = useState<string | null>(null);
+  const [editingInstId, setEditingInstId] = useState<string | null>(null);
+
+  // Sandboxed confirmation trackers (Bypass native confirm blocks)
+  const [deleteConfirmHistId, setDeleteConfirmHistId] = useState<string | null>(null);
+  const [deleteConfirmTpId, setDeleteConfirmTpId] = useState<string | null>(null);
+  const [deleteConfirmInstId, setDeleteConfirmInstId] = useState<string | null>(null);
 
   const [historyList, setHistoryList] = useState<JatcHistoryItem[]>(siteConfig.about.history || []);
   const [newHistTitle, setNewHistTitle] = useState('');
@@ -114,6 +126,8 @@ export default function AdminPanel({
     setImportanceReasons(siteConfig.importanceReasons || []);
     setFailureReasons(siteConfig.failureReasons || []);
     setLearningGoals(siteConfig.learningGoals || []);
+    setLearningGoalsSubtitle(siteConfig.learningGoalsSubtitle || '');
+    setLearningGoalsArrowUrl(siteConfig.learningGoalsArrowUrl || '/tribal_arrow.jpg');
     setMethodologies(siteConfig.methodologies || []);
     setShowLmsAndLive(siteConfig.showLmsAndLive ?? true);
     setTargetParticipants(siteConfig.targetParticipants || []);
@@ -318,21 +332,41 @@ export default function AdminPanel({
       text: "Sasaran target peserta baru...",
       imageUrl: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=150&auto=format&fit=crop"
     };
-    setTargetParticipants([...targetParticipants, newTp]);
+    const newList = [...targetParticipants, newTp];
+    setTargetParticipants(newList);
+    setSiteConfig({
+      ...siteConfig,
+      targetParticipants: newList
+    });
+    setEditingTpId(newTp.id); // Open edit mode instantly for the new item!
   };
 
   const handleUpdateTargetParticipantText = (id: string, text: string) => {
-    setTargetParticipants(targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, text } : tp) : { id: `tp-${Math.random()}`, text: String(tp) }));
+    const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, text } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
+    setTargetParticipants(newList);
+    setSiteConfig({
+      ...siteConfig,
+      targetParticipants: newList
+    });
   };
 
   const handleUpdateTargetParticipantImage = (id: string, imageUrl: string) => {
-    setTargetParticipants(targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl } : tp) : { id: `tp-${Math.random()}`, text: String(tp) }));
+    const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
+    setTargetParticipants(newList);
+    setSiteConfig({
+      ...siteConfig,
+      targetParticipants: newList
+    });
   };
 
   const handleDeleteTargetParticipant = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus sasaran target peserta ini?')) {
-      setTargetParticipants(targetParticipants.filter(tp => tp && typeof tp === 'object' && 'id' in tp && tp.id !== id));
-    }
+    const newList = targetParticipants.filter(tp => tp && typeof tp === 'object' && 'id' in tp && tp.id !== id);
+    setTargetParticipants(newList);
+    setSiteConfig({
+      ...siteConfig,
+      targetParticipants: newList
+    });
+    if (editingTpId === id) setEditingTpId(null);
   };
 
   const handleTargetParticipantImageUpload = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
@@ -341,7 +375,12 @@ export default function AdminPanel({
     const reader = new FileReader();
     reader.onloadend = () => {
       const result = reader.result as string;
-      setTargetParticipants(targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl: result } : tp) : { id: `tp-${Math.random()}`, text: String(tp) }));
+      const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl: result } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
+      setTargetParticipants(newList);
+      setSiteConfig({
+        ...siteConfig,
+        targetParticipants: newList
+      });
     };
     reader.readAsDataURL(file);
   };
@@ -397,21 +436,41 @@ export default function AdminPanel({
       name: 'Nama Lembaga / Instansi Baru',
       logoUrl: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=200&auto=format&fit=crop'
     };
-    setInstitutions([...institutions, newInst]);
+    const newList = [...institutions, newInst];
+    setInstitutions(newList);
+    setSiteConfig({
+      ...siteConfig,
+      institutions: newList
+    });
+    setEditingInstId(newInst.id); // Open edit mode instantly for the new institution!
   };
 
   const handleUpdateInstitutionName = (id: string, name: string) => {
-    setInstitutions(institutions.map(inst => inst.id === id ? { ...inst, name } : inst));
+    const newList = institutions.map(inst => inst.id === id ? { ...inst, name } : inst);
+    setInstitutions(newList);
+    setSiteConfig({
+      ...siteConfig,
+      institutions: newList
+    });
   };
 
   const handleUpdateInstitutionLogo = (id: string, logoUrl: string) => {
-    setInstitutions(institutions.map(inst => inst.id === id ? { ...inst, logoUrl } : inst));
+    const newList = institutions.map(inst => inst.id === id ? { ...inst, logoUrl } : inst);
+    setInstitutions(newList);
+    setSiteConfig({
+      ...siteConfig,
+      institutions: newList
+    });
   };
 
   const handleDeleteInstitution = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus lembaga/instansi ini?')) {
-      setInstitutions(institutions.filter(inst => inst.id !== id));
-    }
+    const newList = institutions.filter(inst => inst.id !== id);
+    setInstitutions(newList);
+    setSiteConfig({
+      ...siteConfig,
+      institutions: newList
+    });
+    if (editingInstId === id) setEditingInstId(null);
   };
 
   // History handlers
@@ -427,17 +486,44 @@ export default function AdminPanel({
       description: newHistDesc.trim(),
       imageUrl: newHistImg.trim()
     };
-    setHistoryList([...historyList, newItem]);
+    const newList = [...historyList, newItem];
+    setHistoryList(newList);
+    setSiteConfig({
+      ...siteConfig,
+      about: {
+        ...siteConfig.about,
+        history: newList
+      }
+    });
     setNewHistTitle('');
     setNewHistYear('');
     setNewHistDesc('');
     setNewHistImg('');
   };
 
+  const handleUpdateHistoryItem = (id: string, field: keyof JatcHistoryItem, value: any) => {
+    const newList = historyList.map(item => item.id === id ? { ...item, [field]: value } : item);
+    setHistoryList(newList);
+    setSiteConfig({
+      ...siteConfig,
+      about: {
+        ...siteConfig.about,
+        history: newList
+      }
+    });
+  };
+
   const handleDeleteHistoryItem = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus foto sejarah/dokumentasi ini?')) {
-      setHistoryList(historyList.filter(item => item.id !== id));
-    }
+    const newList = historyList.filter(item => item.id !== id);
+    setHistoryList(newList);
+    setSiteConfig({
+      ...siteConfig,
+      about: {
+        ...siteConfig.about,
+        history: newList
+      }
+    });
+    if (editingHistId === id) setEditingHistId(null);
   };
 
   const handleHistImgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -494,6 +580,8 @@ export default function AdminPanel({
       importanceReasons,
       failureReasons,
       learningGoals,
+      learningGoalsSubtitle,
+      learningGoalsArrowUrl,
       methodologies,
       showLmsAndLive,
       targetParticipants,
@@ -1472,6 +1560,71 @@ export default function AdminPanel({
                         </button>
                       </div>
 
+                      {/* Subtitle / Ketegasan tujuan utama training */}
+                      <div className="p-3 bg-amber-50/50 border border-[#a18241]/20 rounded-lg space-y-1">
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide font-sans">
+                          Ketegasan Tujuan Utama Training (Peta Sasaran):
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={learningGoalsSubtitle}
+                          onChange={(e) => setLearningGoalsSubtitle(e.target.value)}
+                          className="w-full text-xs rounded border border-neutral-300 p-2 font-sans bg-white outline-none focus:border-brand-gold"
+                          placeholder="Sistem materi kurikulum kami didesain presisi..."
+                        />
+                        <p className="text-[9px] text-gray-400 font-sans italic">
+                          Teks penjelas (Ketegasan Tujuan Utama) yang terpajang di sebelah kanan visual panah adat.
+                        </p>
+                      </div>
+
+                      {/* Logo Panah Sasaran / Target Map Arrow Image */}
+                      <div className="p-3 bg-amber-50/50 border border-[#a18241]/20 rounded-lg space-y-2">
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide font-sans">
+                          Logo Panah Adat Sasaran (Samping Peta):
+                        </label>
+                        <div className="flex gap-3 items-center">
+                          {learningGoalsArrowUrl ? (
+                            <img
+                              src={learningGoalsArrowUrl}
+                              alt="Logo Panah Adat"
+                              className="w-12 h-12 object-contain rounded bg-transparent border border-neutral-200/60 p-0.5 mix-blend-multiply"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded bg-neutral-100 flex items-center justify-center text-[7px] text-gray-400">No Image</div>
+                          )}
+                          <div className="flex-1 space-y-1">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  setLearningGoalsArrowUrl(reader.result as string);
+                                };
+                                reader.readAsDataURL(file);
+                              }}
+                              className="w-full text-[9px] text-gray-600 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
+                            />
+                            <div className="flex gap-1.5 items-center">
+                              <span className="text-[8px] font-mono text-gray-400">URL:</span>
+                              <input
+                                type="text"
+                                value={learningGoalsArrowUrl}
+                                onChange={(e) => setLearningGoalsArrowUrl(e.target.value)}
+                                className="w-full text-[9px] rounded border border-neutral-200 p-1 font-mono text-gray-600 bg-white focus:border-brand-gold outline-none"
+                                placeholder="Ganti URL gambar..."
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-[9px] text-gray-400 font-sans italic">
+                          Latar belakang putih otomatis dihilangkan di halaman depan menggunakan efek blend transparansi malam.
+                        </p>
+                      </div>
+
                       {learningGoals.length === 0 ? (
                         <div className="text-center py-6 text-[11px] text-gray-400 italic">
                           Belum ada sasaran pembelajaran. Silakan klik tambah baru.
@@ -1672,66 +1825,145 @@ export default function AdminPanel({
                           Belum ada target sasaran yang disimpan.
                         </div>
                       ) : (
-                        <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
+                        <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
                           {targetParticipants.map((tpObj, idx) => {
                             const tp = tpObj && typeof tpObj === 'object' && 'id' in tpObj ? (tpObj as TargetParticipantConfig) : { id: `tp-migrated-${idx}`, text: String(tpObj), imageUrl: '' };
+                            const isEditing = editingTpId === tp.id;
+                            const isConfirming = deleteConfirmTpId === tp.id;
+
                             return (
-                              <div key={tp.id} className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-[10.5px] font-mono text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded">Sasaran #{idx + 1}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteTargetParticipant(tp.id)}
-                                    className="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded hover:bg-red-100"
-                                    title="Hapus"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
+                              <div key={tp.id} className={`p-3 rounded-xl border transition-all duration-200 ${isEditing ? 'bg-amber-50/40 border-amber-300 shadow-sm' : 'bg-neutral-50 border-neutral-200'}`}>
+                                <div className="flex justify-between items-center mb-2 pb-1.5 border-b border-neutral-200/60">
+                                  <span className="text-[10px] font-mono text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded">
+                                    Sasaran #{idx + 1}
+                                  </span>
+                                  
+                                  {/* Actions Block */}
+                                  <div className="flex items-center gap-1.5">
+                                    {!isEditing && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setEditingTpId(tp.id);
+                                          setDeleteConfirmTpId(null); // Cancel any delete prompts
+                                        }}
+                                        className="text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded text-[9px] font-bold flex items-center gap-1 border border-amber-200"
+                                        title="Ubah info sasaran"
+                                      >
+                                        <Edit className="w-3 h-3" /> Edit
+                                      </button>
+                                    )}
+
+                                    {/* Safe Deletion Action with Inline Confirmation inside iframe */}
+                                    {isConfirming ? (
+                                      <div className="flex items-center gap-1 bg-red-50 border border-red-200 rounded p-0.5">
+                                        <span className="text-[9px] text-red-600 font-bold px-1">Yakin?</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteTargetParticipant(tp.id)}
+                                          className="bg-red-600 hover:bg-red-700 text-white font-bold text-[8.5px] px-1.5 py-0.5 rounded shadow-sm"
+                                        >
+                                          Ya, Hapus
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setDeleteConfirmTpId(null)}
+                                          className="text-gray-500 hover:text-gray-700 text-[8.5px] font-semibold px-1 rounded"
+                                        >
+                                          Batal
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setDeleteConfirmTpId(tp.id);
+                                          setEditingTpId(null); // Close edit mode if delete is requested
+                                        }}
+                                        className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded"
+                                        title="Hapus"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
 
-                                <div className="space-y-1.5">
-                                  <div>
-                                    <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono">Teks Sasaran:</label>
-                                    <textarea
-                                      rows={2}
-                                      value={tp.text}
-                                      onChange={(e) => handleUpdateTargetParticipantText(tp.id, e.target.value)}
-                                      className="w-full text-xs rounded border border-neutral-300 p-1.5 focus:border-amber-600 font-sans outline-none"
-                                      placeholder="Contoh: Peserta tingkat pendidikan S1, S2, S3..."
-                                    />
-                                  </div>
+                                {/* CARD CONTENT BODY */}
+                                {isEditing ? (
+                                  <div className="space-y-2.5 pt-1">
+                                    <div>
+                                      <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono">Teks Sasaran:</label>
+                                      <textarea
+                                        rows={2}
+                                        value={tp.text}
+                                        onChange={(e) => handleUpdateTargetParticipantText(tp.id, e.target.value)}
+                                        className="w-full text-xs rounded border border-neutral-300 p-1.5 focus:border-amber-600 font-sans outline-none bg-white font-medium"
+                                        placeholder="Contoh: Peserta tingkat pendidikan S1, S2, S3..."
+                                      />
+                                    </div>
 
-                                  <div className="space-y-1">
-                                    <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono">Foto / Gambar (Upload atau URL):</label>
-                                    <div className="flex items-center gap-2">
-                                      {tp.imageUrl ? (
-                                        <img
-                                          src={tp.imageUrl}
-                                          alt={tp.text}
-                                          className="w-10 h-10 object-cover rounded bg-white border border-neutral-200"
-                                          referrerPolicy="no-referrer"
-                                        />
-                                      ) : (
-                                        <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-[8px] text-gray-400 font-mono">No Image</div>
-                                      )}
-                                      <div className="flex-1 space-y-1">
-                                        <input
-                                          type="file"
-                                          accept="image/*"
-                                          onChange={(e) => handleTargetParticipantImageUpload(e, tp.id)}
-                                          className="w-full text-[9px] text-gray-500 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
-                                        />
-                                        <input
-                                          type="text"
-                                          value={tp.imageUrl || ''}
-                                          onChange={(e) => handleUpdateTargetParticipantImage(tp.id, e.target.value)}
-                                          className="w-full text-[9px] rounded border border-neutral-300 p-0.5 font-mono"
-                                          placeholder="Atau tempel URL gambar luar..."
-                                        />
+                                    <div className="space-y-1">
+                                      <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono">Foto / Gambar (Upload atau URL):</label>
+                                      <div className="flex items-center gap-2">
+                                        {tp.imageUrl ? (
+                                          <img
+                                            src={tp.imageUrl}
+                                            alt={tp.text}
+                                            className="w-10 h-10 object-cover rounded bg-white border border-neutral-200"
+                                            referrerPolicy="no-referrer"
+                                          />
+                                        ) : (
+                                          <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-[8px] text-gray-400 font-mono">No Image</div>
+                                        )}
+                                        <div className="flex-1 space-y-1">
+                                          <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => handleTargetParticipantImageUpload(e, tp.id)}
+                                            className="w-full text-[9px] text-gray-500 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
+                                          />
+                                          <input
+                                            type="text"
+                                            value={tp.imageUrl || ''}
+                                            onChange={(e) => handleUpdateTargetParticipantImage(tp.id, e.target.value)}
+                                            className="w-full text-[9px] rounded border border-neutral-300 p-0.5 font-mono"
+                                            placeholder="Atau tempel URL gambar luar..."
+                                          />
+                                        </div>
                                       </div>
                                     </div>
+
+                                    {/* Done button to close editing state */}
+                                    <div className="flex justify-end pt-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditingTpId(null)}
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-[9px] px-2.5 py-1 rounded shadow-sm flex items-center gap-1 cursor-pointer"
+                                      >
+                                        Selesai Edit
+                                      </button>
+                                    </div>
                                   </div>
-                                </div>
+                                ) : (
+                                  <div className="flex items-start gap-2.5 py-1">
+                                    {tp.imageUrl ? (
+                                      <img
+                                        src={tp.imageUrl}
+                                        alt={tp.text}
+                                        className="w-11 h-11 object-cover rounded-lg border border-neutral-200/80 bg-white"
+                                        referrerPolicy="no-referrer"
+                                      />
+                                    ) : (
+                                      <div className="w-11 h-11 rounded-lg bg-neutral-200 flex items-center justify-center text-[8px] text-neutral-400 font-mono">No Pic</div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs text-neutral-700 font-sans font-medium leading-relaxed break-words whitespace-pre-wrap select-text">
+                                        {tp.text}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
@@ -1763,65 +1995,142 @@ export default function AdminPanel({
                           Belum ada lembaga/instansi kemitraan terdaftar.
                         </div>
                       ) : (
-                        <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-                          {institutions.map((inst) => (
-                            <div key={inst.id} className="p-2.5 bg-neutral-50 rounded-lg border border-neutral-200 space-y-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-[9px] font-mono text-[#a18241] font-bold">Lembaga ID: {inst.id.substring(0, 7)}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteInstitution(inst.id)}
-                                  className="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded"
-                                  title="Hapus"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
-                              </div>
+                        <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+                          {institutions.map((inst) => {
+                            const isEditing = editingInstId === inst.id;
+                            const isConfirming = deleteConfirmInstId === inst.id;
 
-                              <div className="space-y-1.5">
-                                <div>
-                                  <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono">Nama Lembaga:</label>
-                                  <input
-                                    type="text"
-                                    value={inst.name}
-                                    onChange={(e) => handleUpdateInstitutionName(inst.id, e.target.value)}
-                                    className="w-full text-xs rounded border border-neutral-300 p-1 focus:border-[#a18241]"
-                                    placeholder="Masukkan nama lembaga..."
-                                  />
+                            return (
+                              <div key={inst.id} className={`p-2.5 rounded-xl border transition-all duration-200 ${isEditing ? 'bg-indigo-50/20 border-indigo-200 shadow-sm' : 'bg-neutral-50 border-neutral-200'}`}>
+                                <div className="flex justify-between items-center mb-1.5 pb-1 border-b border-neutral-200/60">
+                                  <span className="text-[9px] font-mono text-[#a18241] font-bold">Lembaga ID: {inst.id.substring(0, 7)}</span>
+                                  
+                                  {/* Actions block */}
+                                  <div className="flex items-center gap-1.5">
+                                    {!isEditing && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setEditingInstId(inst.id);
+                                          setDeleteConfirmInstId(null);
+                                        }}
+                                        className="text-brand-blue hover:text-brand-blue/80 bg-blue-50 px-2 py-0.5 rounded text-[9px] font-bold flex items-center gap-0.5 border border-blue-100"
+                                      >
+                                        <Edit className="w-2.5 h-2.5" /> Edit
+                                      </button>
+                                    )}
+
+                                    {/* Safe Confirmation in iframes */}
+                                    {isConfirming ? (
+                                      <div className="flex items-center gap-1 bg-red-50 border border-red-200 rounded p-0.5">
+                                        <span className="text-[8px] text-red-600 font-bold px-1">Yakin?</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteInstitution(inst.id)}
+                                          className="bg-red-600 hover:bg-red-700 text-white font-bold text-[8px] px-1.5 py-0.5 rounded shadow-sm"
+                                        >
+                                          Ya
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setDeleteConfirmInstId(null)}
+                                          className="text-gray-500 hover:text-gray-700 text-[8px] font-semibold px-1 rounded"
+                                        >
+                                          Batal
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setDeleteConfirmInstId(inst.id);
+                                          setEditingInstId(null);
+                                        }}
+                                        className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded"
+                                        title="Hapus"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="space-y-1">
-                                  <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono">Logo Lembaga (Ganti/Upload):</label>
-                                  <div className="flex items-center gap-2">
+
+                                {isEditing ? (
+                                  <div className="space-y-2 pt-1">
+                                    <div>
+                                      <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono">Nama Lembaga:</label>
+                                      <input
+                                        type="text"
+                                        value={inst.name}
+                                        onChange={(e) => handleUpdateInstitutionName(inst.id, e.target.value)}
+                                        className="w-full text-xs rounded border border-neutral-300 p-1 bg-white focus:border-[#a18241] outline-none"
+                                        placeholder="Masukkan nama lembaga..."
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="block text-[8px] font-bold uppercase text-gray-400 font-mono">Logo Lembaga (Ganti/Upload):</label>
+                                      <div className="flex items-center gap-2">
+                                        {inst.logoUrl ? (
+                                          <img
+                                            src={inst.logoUrl}
+                                            alt={inst.name}
+                                            className="w-8 h-8 object-contain rounded bg-white border border-neutral-200"
+                                            referrerPolicy="no-referrer"
+                                          />
+                                        ) : (
+                                          <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center text-[8px] text-gray-400 font-mono">No Logo</div>
+                                        )}
+                                        <div className="flex-1">
+                                          <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => handleInstitutionLogoUpload(e, inst.id)}
+                                            className="w-full text-[9px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-[#0b2240]/10 file:text-[#0b2240] hover:file:bg-[#0b2240]/20 cursor-pointer"
+                                          />
+                                          <input
+                                            type="text"
+                                            value={inst.logoUrl || ''}
+                                            onChange={(e) => handleUpdateInstitutionLogo(inst.id, e.target.value)}
+                                            className="w-full text-[9px] mt-1 rounded border border-neutral-300 p-0.5 bg-white font-mono"
+                                            placeholder="Atau tempel URL logo..."
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Done Editing button */}
+                                    <div className="flex justify-end pt-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditingInstId(null)}
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-[8.5px] px-2 py-0.5 rounded shadow-sm flex items-center gap-1 cursor-pointer"
+                                      >
+                                        Selesai
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2.5 py-1">
                                     {inst.logoUrl ? (
                                       <img
                                         src={inst.logoUrl}
                                         alt={inst.name}
-                                        className="w-8 h-8 object-contain rounded bg-white border border-neutral-200"
+                                        className="w-9 h-9 object-contain rounded-lg border border-neutral-200/80 bg-white p-0.5"
                                         referrerPolicy="no-referrer"
                                       />
                                     ) : (
-                                      <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center text-[8px] text-gray-400 font-mono">No Logo</div>
+                                      <div className="w-9 h-9 rounded-lg bg-neutral-100 flex items-center justify-center text-[8px] text-neutral-400 font-mono">Logo</div>
                                     )}
-                                    <div className="flex-1">
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => handleInstitutionLogoUpload(e, inst.id)}
-                                        className="w-full text-[9px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-[#0b2240]/10 file:text-[#0b2240] hover:file:bg-[#0b2240]/20 cursor-pointer"
-                                      />
-                                      <input
-                                        type="text"
-                                        value={inst.logoUrl || ''}
-                                        onChange={(e) => handleUpdateInstitutionLogo(inst.id, e.target.value)}
-                                        className="w-full text-[9px] mt-1 rounded border border-neutral-300 p-0.5"
-                                        placeholder="Atau tempel URL logo..."
-                                      />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs text-neutral-800 font-sans font-bold truncate select-text">
+                                        {inst.name}
+                                      </p>
                                     </div>
                                   </div>
-                                </div>
+                                )}
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -1932,34 +2241,168 @@ export default function AdminPanel({
                           </div>
                         ) : (
                           <div className="grid grid-cols-1 gap-2.5 max-h-[300px] overflow-y-auto pr-1">
-                            {historyList.map((hist) => (
-                              <div key={hist.id} className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 flex gap-3 text-left items-start justify-between">
-                                <div className="flex gap-3 flex-1 overflow-hidden">
-                                  <img
-                                    src={hist.imageUrl}
-                                    alt={hist.title}
-                                    className="w-16 h-12 object-cover rounded border bg-neutral-200 shrink-0"
-                                    referrerPolicy="no-referrer"
-                                  />
-                                  <div className="space-y-1 flex-1 min-w-0">
+                            {historyList.map((hist) => {
+                              const isEditing = editingHistId === hist.id;
+                              const isConfirming = deleteConfirmHistId === hist.id;
+
+                              return (
+                                <div key={hist.id} className={`p-3 rounded-xl border transition-all duration-200 ${isEditing ? 'bg-amber-50/40 border-amber-300 shadow-sm' : 'bg-neutral-50 border-neutral-200'} flex flex-col gap-2.5`}>
+                                  <div className="flex justify-between items-center pb-2 border-b border-neutral-100">
                                     <div className="flex items-center gap-2">
-                                      <span className="bg-[#a18241]/10 text-[#a18241] text-[9px] font-bold font-mono px-1.5 py-0.25 rounded">Tahun {hist.year}</span>
+                                      <span className="bg-[#a18241]/10 text-[#a18241] text-[9px] font-bold font-mono px-1.5 py-0.5 rounded">Tahun {hist.year}</span>
                                       <span className="text-[8px] font-mono text-gray-400">ID: {hist.id.substring(0, 9)}</span>
                                     </div>
-                                    <h6 className="text-[11px] font-bold text-[#0b2240] leading-tight truncate">{hist.title}</h6>
-                                    <p className="text-[10px] text-gray-500 font-sans leading-normal line-clamp-1">{hist.description}</p>
+
+                                    {/* Action buttons */}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      {!isEditing && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setEditingHistId(hist.id);
+                                            setDeleteConfirmHistId(null);
+                                          }}
+                                          className="text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded text-[9px] font-bold flex items-center gap-0.5 border border-amber-200"
+                                        >
+                                          <Edit className="w-2.5 h-2.5" /> Edit
+                                        </button>
+                                      )}
+
+                                      {/* Safe Confirmation in iframes */}
+                                      {isConfirming ? (
+                                        <div className="flex items-center gap-1 bg-red-50 border border-red-200 rounded p-0.5">
+                                          <span className="text-[8px] text-red-600 font-bold px-1.5">Yakin hapus?</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDeleteHistoryItem(hist.id)}
+                                            className="bg-red-600 hover:bg-red-700 text-white font-bold text-[8.5px] px-2 py-0.5 rounded shadow-sm"
+                                          >
+                                            Ya
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setDeleteConfirmHistId(null)}
+                                            className="text-gray-500 hover:text-gray-700 text-[8.5px] font-semibold px-1-5 rounded"
+                                          >
+                                            Batal
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setDeleteConfirmHistId(hist.id);
+                                            setEditingHistId(null);
+                                          }}
+                                          className="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded hover:bg-red-100 cursor-pointer shrink-0"
+                                          title="Hapus"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
+
+                                  {isEditing ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                                      <div>
+                                        <label className="block text-[8px] font-bold text-gray-400 uppercase font-mono mb-0.5">Judul:</label>
+                                        <input
+                                          type="text"
+                                          value={hist.title}
+                                          onChange={(e) => handleUpdateHistoryItem(hist.id, 'title', e.target.value)}
+                                          className="w-full text-xs rounded border border-neutral-300 p-1 bg-white font-sans text-neutral-800"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-[8px] font-bold text-gray-400 uppercase font-mono mb-0.5">Tahun:</label>
+                                        <input
+                                          type="text"
+                                          value={hist.year}
+                                          onChange={(e) => handleUpdateHistoryItem(hist.id, 'year', e.target.value)}
+                                          className="w-full text-xs rounded border border-neutral-300 p-1 bg-white font-mono text-neutral-800"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-[8px] font-bold text-gray-400 uppercase font-mono mb-0.5">Deskripsi:</label>
+                                        <textarea
+                                          rows={1}
+                                          value={hist.description}
+                                          onChange={(e) => handleUpdateHistoryItem(hist.id, 'description', e.target.value)}
+                                          className="w-full text-xs rounded border border-neutral-300 p-1 bg-white font-sans text-neutral-800 resize-y"
+                                        />
+                                      </div>
+
+                                      <div className="sm:col-span-3 space-y-1">
+                                        <label className="block text-[8px] font-bold text-gray-400 uppercase font-mono">Ganti Gambar (Upload atau URL):</label>
+                                        <div className="flex gap-2 items-center">
+                                          {hist.imageUrl ? (
+                                            <img
+                                              src={hist.imageUrl}
+                                              alt={hist.title}
+                                              className="w-10 h-8 object-cover rounded border bg-neutral-200 bg-white"
+                                              referrerPolicy="no-referrer"
+                                            />
+                                          ) : (
+                                            <div className="w-10 h-8 rounded bg-gray-100 flex items-center justify-center text-[7px] text-gray-400">No Img</div>
+                                          )}
+                                          <div className="flex-1 space-y-1">
+                                            <input
+                                              type="file"
+                                              accept="image/*"
+                                              onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                  handleUpdateHistoryItem(hist.id, 'imageUrl', reader.result as string);
+                                                };
+                                                reader.readAsDataURL(file);
+                                              }}
+                                              className="w-full text-[9px] text-gray-500 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
+                                            />
+                                            <input
+                                              type="text"
+                                              value={hist.imageUrl}
+                                              onChange={(e) => handleUpdateHistoryItem(hist.id, 'imageUrl', e.target.value)}
+                                              className="w-full text-[9px] rounded border border-neutral-300 p-0.5 font-mono"
+                                              placeholder="Atau URL..."
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="sm:col-span-3 flex justify-end">
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditingHistId(null)}
+                                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-[8.5px] px-2.5 py-1 rounded shadow-sm"
+                                        >
+                                          Selesai Edit
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex gap-3 text-left items-start">
+                                      {hist.imageUrl ? (
+                                        <img
+                                          src={hist.imageUrl}
+                                          alt={hist.title}
+                                          className="w-20 h-14 object-cover rounded border bg-neutral-200 shrink-0"
+                                          referrerPolicy="no-referrer"
+                                        />
+                                      ) : (
+                                        <div className="w-20 h-14 bg-neutral-100 rounded border flex items-center justify-center text-[8px] text-gray-300 font-mono shrink-0">No Image</div>
+                                      )}
+                                      <div className="space-y-0.5 flex-1 min-w-0">
+                                        <h6 className="text-[11px] font-bold text-[#0b2240] leading-tight select-text">{hist.title}</h6>
+                                        <p className="text-[10px] text-gray-500 font-sans leading-normal whitespace-pre-wrap select-text">{hist.description}</p>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteHistoryItem(hist.id)}
-                                  className="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded hover:bg-red-100 cursor-pointer shrink-0"
-                                  title="Hapus"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>

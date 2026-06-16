@@ -165,6 +165,8 @@ export interface SiteConfig {
   failureReasons: FailureReason[];
   methodologies: TeachingMethodology[];
   learningGoals: LearningGoal[];
+  learningGoalsSubtitle?: string;
+  learningGoalsArrowUrl?: string;
   about: AboutConfig;
   contact: ContactConfig;
   certificate?: CertificateConfig;

@@ -114,6 +114,8 @@ export const INITIAL_SITE_CONFIG: SiteConfig = {
     { id: "lg-6", number: 6, goal: "Mempelajari & Menguasai 16 Tenses Bahasa Inggris (16 English Tenses)", goalId: "Learn the 16 English Tenses" },
     { id: "lg-7", number: 7, goal: "Menjadi Instruktur Bahasa Inggris Profesional (Become an English Instructor)", goalId: "To Become an English Instructor" }
   ],
+  learningGoalsSubtitle: "Sistem materi kurikulum kami didesain presisi untuk melampaui hambatan mental konvensional hingga Anda siap dinobatkan menjadi instruktur.",
+  learningGoalsArrowUrl: "/tribal_arrow.jpg",
   about: {
     profile: "JOHN ANDERSEN TRAINING AND CONSULTING INDONESIA adalah lembaga pelatihan dan konsultasi bahasa Inggris kontemporer revolusioner yang didirikan dengan tekad mulia untuk mendobrak kebuntuan metode pengajaran konvensional. Kami percaya bahwa bahasa bukanlah pengetahuan teoritis yang sekedar dihafalkan, melainkan sebuah alat berpikir, berkomunikasi, dan mengekspresikan diri secara merdeka.",
     vision: "Menjadi pusat edukasi bahasa Inggris, pelatihan instruktur, dan konsultasi komunikasi terdepan di Indonesia yang berlandaskan pemikiran logis, penguatan psikologis, dan metodologi kontemporer berstandar global.",
