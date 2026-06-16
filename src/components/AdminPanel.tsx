@@ -24,6 +24,54 @@ interface AdminPanelProps {
   setLmsModules?: (m: LMSModule[]) => void;
 }
 
+// Helper function to compress images using HTML5 Canvas to prevent exceeding Firestore 1MB document limit
+export function compressImage(file: File, maxWidth = 1200, maxHeight = 800, quality = 0.7): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(event.target?.result as string);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => {
+        resolve(event.target?.result as string); // Fallback to original Base64 on load error
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => {
+      resolve('');
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function AdminPanel({
   siteConfig,
   setSiteConfig,
@@ -369,64 +417,44 @@ export default function AdminPanel({
     if (editingTpId === id) setEditingTpId(null);
   };
 
-  const handleTargetParticipantImageUpload = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
+  const handleTargetParticipantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl: result } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
-      setTargetParticipants(newList);
-      setSiteConfig({
-        ...siteConfig,
-        targetParticipants: newList
-      });
-    };
-    reader.readAsDataURL(file);
+    const result = await compressImage(file, 800, 600, 0.75);
+    const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl: result } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
+    setTargetParticipants(newList);
+    setSiteConfig({
+      ...siteConfig,
+      targetParticipants: newList
+    });
   };
 
-  const handleHeroBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHeroBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      setBackgroundImageUrl(result);
-    };
-    reader.readAsDataURL(file);
+    const result = await compressImage(file, 1600, 1000, 0.7);
+    setBackgroundImageUrl(result);
   };
 
-  const handleHeroBgUpload2 = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHeroBgUpload2 = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      setBackgroundImageUrl2(result);
-    };
-    reader.readAsDataURL(file);
+    const result = await compressImage(file, 1600, 1000, 0.7);
+    setBackgroundImageUrl2(result);
   };
 
-  const handleHeroBgUpload3 = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHeroBgUpload3 = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      setBackgroundImageUrl3(result);
-    };
-    reader.readAsDataURL(file);
+    const result = await compressImage(file, 1600, 1000, 0.7);
+    setBackgroundImageUrl3(result);
   };
 
-  const handleHeroBgUpload4 = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHeroBgUpload4 = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      setBackgroundImageUrl4(result);
-    };
-    reader.readAsDataURL(file);
+    const result = await compressImage(file, 1600, 1000, 0.7);
+    setBackgroundImageUrl4(result);
   };
 
   // Institutions handlers
@@ -526,15 +554,11 @@ export default function AdminPanel({
     if (editingHistId === id) setEditingHistId(null);
   };
 
-  const handleHistImgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHistImgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      setNewHistImg(result);
-    };
-    reader.readAsDataURL(file);
+    const result = await compressImage(file, 1000, 700, 0.75);
+    setNewHistImg(result);
   };
 
   // Save Homepage edit Configurations
@@ -592,44 +616,43 @@ export default function AdminPanel({
   };
 
   // Helper for Institution Logo Upload
-  const handleInstitutionLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
+  const handleInstitutionLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      setInstitutions(prev => prev.map(inst => inst.id === id ? { ...inst, logoUrl: result } : inst));
-    };
-    reader.readAsDataURL(file);
+    const result = await compressImage(file, 500, 300, 0.8);
+    setInstitutions(prev => prev.map(inst => inst.id === id ? { ...inst, logoUrl: result } : inst));
   };
 
   // Helper to read file contents for articles / gallery / certificate
-  const handleFileUpload = (
+  const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     type: 'article-new' | 'article-edit' | 'gallery-new' | 'gallery-edit' | 'cert-logo' | 'cert-right-logo' | 'cert-signature'
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      if (type === 'article-new') {
-        setNewArtImgUrl(result);
-      } else if (type === 'article-edit' && editingArticle) {
-        setEditingArticle({ ...editingArticle, imageUrl: result });
-      } else if (type === 'gallery-new') {
-        setNewGalImgUrl(result);
-      } else if (type === 'gallery-edit' && editingGallery) {
-        setEditingGallery({ ...editingGallery, imageUrl: result });
-      } else if (type === 'cert-logo') {
-        setCertLogoUrl(result);
-      } else if (type === 'cert-right-logo') {
-        setCertRightLogoUrl(result);
-      } else if (type === 'cert-signature') {
-        setCertSignUrl(result);
-      }
-    };
-    reader.readAsDataURL(file);
+    
+    let result = '';
+    if (type.startsWith('cert-')) {
+      result = await compressImage(file, 450, 300, 0.85);
+    } else {
+      result = await compressImage(file, 1000, 700, 0.75);
+    }
+
+    if (type === 'article-new') {
+      setNewArtImgUrl(result);
+    } else if (type === 'article-edit' && editingArticle) {
+      setEditingArticle({ ...editingArticle, imageUrl: result });
+    } else if (type === 'gallery-new') {
+      setNewGalImgUrl(result);
+    } else if (type === 'gallery-edit' && editingGallery) {
+      setEditingGallery({ ...editingGallery, imageUrl: result });
+    } else if (type === 'cert-logo') {
+      setCertLogoUrl(result);
+    } else if (type === 'cert-right-logo') {
+      setCertRightLogoUrl(result);
+    } else if (type === 'cert-signature') {
+      setCertSignUrl(result);
+    }
   };
 
   // Add Article
@@ -1597,14 +1620,11 @@ export default function AdminPanel({
                             <input
                               type="file"
                               accept="image/*"
-                              onChange={(e) => {
+                              onChange={async (e) => {
                                 const file = e.target.files?.[0];
                                 if (!file) return;
-                                const reader = new FileReader();
-                                reader.onloadend = () => {
-                                  setLearningGoalsArrowUrl(reader.result as string);
-                                };
-                                reader.readAsDataURL(file);
+                                const result = await compressImage(file, 400, 400, 0.8);
+                                setLearningGoalsArrowUrl(result);
                               }}
                               className="w-full text-[9px] text-gray-600 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
                             />
@@ -2350,14 +2370,11 @@ export default function AdminPanel({
                                             <input
                                               type="file"
                                               accept="image/*"
-                                              onChange={(e) => {
+                                              onChange={async (e) => {
                                                 const file = e.target.files?.[0];
                                                 if (!file) return;
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => {
-                                                  handleUpdateHistoryItem(hist.id, 'imageUrl', reader.result as string);
-                                                };
-                                                reader.readAsDataURL(file);
+                                                const result = await compressImage(file, 1000, 700, 0.75);
+                                                handleUpdateHistoryItem(hist.id, 'imageUrl', result);
                                               }}
                                               className="w-full text-[9px] text-gray-500 file:mr-2 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
                                             />
