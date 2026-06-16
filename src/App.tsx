@@ -2830,7 +2830,7 @@ export default function App() {
 
           <div className="space-y-3 text-xs leading-normal font-sans">
             <h4 className="font-serif font-bold text-white uppercase tracking-wider text-sm flex items-center gap-1.5">
-              <Activity className="w-4 h-4 text-[#c5a059]" /> Kantor JATC Slipi
+              <Activity className="w-4 h-4 text-[#c5a059]" /> Kantor JATC 
             </h4>
             <div className="space-y-2 text-neutral-400 font-sans">
               <div className="flex gap-2 items-start">
