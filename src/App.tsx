@@ -129,30 +129,110 @@ export default function App() {
   const [targetIdx, setTargetIdx] = useState(0);
   const [partnerIdx, setPartnerIdx] = useState(0);
 
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Sync state helper to write to backend
+  const saveToServer = async (payload: Partial<{
+    siteConfig: SiteConfig;
+    members: Member[];
+    sessions: LearningSession[];
+    articles: Article[];
+    gallery: GalleryItem[];
+    lmsModules: LMSModule[];
+  }>) => {
+    if (!dataLoaded) return;
+    try {
+      await fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      console.error("Gagal sinkronisasi data ke cloud server:", e);
+    }
+  };
+
+  // On mount: Fetch unified data from express server data-store.json
+  useEffect(() => {
+    async function initDatabase() {
+      try {
+        const response = await fetch('/api/data');
+        if (response.ok) {
+          const db = await response.json();
+          if (db && !db.empty) {
+            if (db.siteConfig) setSiteConfig(db.siteConfig);
+            if (db.members) setMembers(db.members);
+            if (db.sessions) setSessions(db.sessions);
+            if (db.articles) setArticles(db.articles);
+            if (db.gallery) setGallery(db.gallery);
+            if (db.lmsModules) setLmsModules(db.lmsModules);
+          } else {
+            // Newly booted environment. Push the client defaults to build the initial data-store.json!
+            await fetch('/api/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                siteConfig: siteConfig || INITIAL_SITE_CONFIG,
+                members: members || [],
+                sessions: sessions || INITIAL_SESSIONS,
+                articles: articles || INITIAL_ARTICLES,
+                gallery: gallery || INITIAL_GALLERY,
+                lmsModules: lmsModules || INITIAL_LMS_MODULES
+              })
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Koneksi gagal ke server, menggunakan data lokal cached:", err);
+      } finally {
+        setDataLoaded(true);
+      }
+    }
+    initDatabase();
+  }, []);
+
   // Sync to localStorages on state changes
   useEffect(() => {
     localStorage.setItem('jatc_site_config', JSON.stringify(siteConfig));
-  }, [siteConfig]);
+    if (dataLoaded) {
+      saveToServer({ siteConfig });
+    }
+  }, [siteConfig, dataLoaded]);
 
   useEffect(() => {
     localStorage.setItem('jatc_members', JSON.stringify(members));
-  }, [members]);
+    if (dataLoaded) {
+      saveToServer({ members });
+    }
+  }, [members, dataLoaded]);
 
   useEffect(() => {
     localStorage.setItem('jatc_sessions', JSON.stringify(sessions));
-  }, [sessions]);
+    if (dataLoaded) {
+      saveToServer({ sessions });
+    }
+  }, [sessions, dataLoaded]);
 
   useEffect(() => {
     localStorage.setItem('jatc_articles', JSON.stringify(articles));
-  }, [articles]);
+    if (dataLoaded) {
+      saveToServer({ articles });
+    }
+  }, [articles, dataLoaded]);
 
   useEffect(() => {
     localStorage.setItem('jatc_gallery', JSON.stringify(gallery));
-  }, [gallery]);
+    if (dataLoaded) {
+      saveToServer({ gallery });
+    }
+  }, [gallery, dataLoaded]);
 
   useEffect(() => {
     localStorage.setItem('jatc_lms_modules', JSON.stringify(lmsModules));
-  }, [lmsModules]);
+    if (dataLoaded) {
+      saveToServer({ lmsModules });
+    }
+  }, [lmsModules, dataLoaded]);
 
   useEffect(() => {
     if (loggedInMember) {
@@ -269,6 +349,24 @@ export default function App() {
   const filteredGallery = galleryFilter === 'semua'
     ? gallery
     : gallery.filter(item => item.category.toLowerCase() === galleryFilter.toLowerCase());
+
+  if (!dataLoaded) {
+    return (
+      <div className="min-h-screen bg-[#0b2240] flex flex-col items-center justify-center text-white p-6 font-sans">
+        <div className="space-y-6 text-center max-w-sm animate-pulse">
+          <div className="w-14 h-14 border-4 border-[#a18241] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="space-y-2">
+            <h1 className="text-sm font-bold font-serif text-[#a18241] tracking-widest uppercase">
+              MENGHUBUNGKAN DATABASE GLOBAL
+            </h1>
+            <p className="text-[10px] text-zinc-400 font-mono tracking-wide leading-relaxed">
+              Sinkronisasi data real-time antar-perangkat...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50/60 font-sans flex flex-col justify-between" id="applet-viewport">
