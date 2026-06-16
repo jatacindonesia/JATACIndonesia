@@ -1,0 +1,140 @@
+{
+  "entities": {
+    "siteConfig": {
+      "title": "Site Configuration",
+      "description": "Global settings for the JATC website",
+      "type": "object",
+      "properties": {
+        "hero": { "type": "object" },
+        "importanceReasons": { "type": "array" },
+        "failureReasons": { "type": "array" },
+        "methodologies": { "type": "array" },
+        "learningGoals": { "type": "array" },
+        "learningGoalsSubtitle": { "type": "string" },
+        "learningGoalsArrowUrl": { "type": "string" },
+        "about": { "type": "object" },
+        "contact": { "type": "object" },
+        "certificate": { "type": "object" },
+        "showLmsAndLive": { "type": "boolean" },
+        "institutions": { "type": "array" },
+        "targetParticipants": { "type": "array" }
+      },
+      "required": ["hero", "importanceReasons", "about", "contact"]
+    },
+    "member": {
+      "title": "Registered JATC Member",
+      "description": "Details of registered courses and student profiles",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "birthPlace": { "type": "string" },
+        "birthDate": { "type": "string" },
+        "institution": { "type": "string" },
+        "gender": { "type": "string" },
+        "religion": { "type": "string" },
+        "profession": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "selectedSession": { "type": "string" },
+        "registeredAt": { "type": "string" },
+        "status": { "type": "string" },
+        "isCertificateApproved": { "type": "boolean" },
+        "password": { "type": "string" }
+      },
+      "required": ["id", "name", "email", "phone", "status"]
+    },
+    "session": {
+      "title": "Learning Session",
+      "description": "Active learning sessions and webinars managed by admins",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "dateTime": { "type": "string" },
+        "instructor": { "type": "string" },
+        "status": { "type": "string" },
+        "isCertificateIssued": { "type": "boolean" },
+        "isWebinarSequence": { "type": "boolean" },
+        "webinarSequenceLabel": { "type": "string" }
+      },
+      "required": ["id", "title", "dateTime", "instructor", "status"]
+    },
+    "article": {
+      "title": "Article",
+      "description": "Educational articles or news publications",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "content": { "type": "string" },
+        "author": { "type": "string" },
+        "date": { "type": "string" },
+        "category": { "type": "string" },
+        "readTime": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "externalUrl": { "type": "string" }
+      },
+      "required": ["id", "title", "content", "author", "date"]
+    },
+    "galleryItem": {
+      "title": "Gallery Item",
+      "description": "Photos or videos showcasing JATC classes and graduations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "date": { "type": "string" },
+        "externalUrl": { "type": "string" },
+        "videoUrl": { "type": "string" }
+      },
+      "required": ["id", "title", "imageUrl", "category", "date"]
+    },
+    "lmsModule": {
+      "title": "LMS Module",
+      "description": "Digital syllabus and downloadable materials for students",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string" },
+        "durationOrPages": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "goalReference": { "type": "string" },
+        "fileUrl": { "type": "string" }
+      },
+      "required": ["id", "title", "type", "fileUrl"]
+    }
+  },
+  "firestore": {
+    "/config/site": {
+      "schema": "siteConfig",
+      "description": "Single document containing JATC homepage text, hero assets, contact address"
+    },
+    "/members/{memberId}": {
+      "schema": "member",
+      "description": "Profiles of JATC members and students"
+    },
+    "/sessions/{sessionId}": {
+      "schema": "session",
+      "description": "List of active webinar and learning sessions"
+    },
+    "/articles/{articleId}": {
+      "schema": "article",
+      "description": "Published articles and news feeds"
+    },
+    "/gallery/{galleryId}": {
+      "schema": "galleryItem",
+      "description": "Media carousel and album collection"
+    },
+    "/lmsModules/{moduleId}": {
+      "schema": "lmsModule",
+      "description": "Digital training materials"
+    }
+  }
+}

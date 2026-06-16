@@ -6,6 +6,24 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+// Firebase Firestore Modules & Helpers
+import {
+  db,
+  fetchSiteConfig,
+  saveSiteConfig,
+  uploadFullAppDb,
+  testConnection,
+  handleFirestoreError,
+  OperationType
+} from './lib/firebase';
+import {
+  collection,
+  onSnapshot,
+  doc,
+  setDoc,
+  deleteDoc
+} from 'firebase/firestore';
+
 // Data & Modules
 import {
   INITIAL_SITE_CONFIG,
@@ -139,7 +157,7 @@ export default function App() {
   const prevGalleryRef = useRef<GalleryItem[] | null>(null);
   const prevLmsModulesRef = useRef<LMSModule[] | null>(null);
 
-  // Sync state helper to write to backend
+  // Sync state helper to write to Firestore
   const saveToServer = async (payload: Partial<{
     siteConfig: SiteConfig;
     members: Member[];
@@ -150,84 +168,187 @@ export default function App() {
   }>) => {
     if (!dataLoaded) return;
     try {
-      await fetch('/api/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      if (payload.siteConfig) {
+        await saveSiteConfig(payload.siteConfig);
+      }
+      if (payload.members) {
+        if (prevMembersRef.current) {
+          const deleted = prevMembersRef.current.filter(x => !payload.members!.some(y => y.id === x.id));
+          for (const item of deleted) {
+            await deleteDoc(doc(db, 'members', item.id));
+          }
+        }
+        for (const item of payload.members) {
+          if (!item.id) continue;
+          await setDoc(doc(db, 'members', item.id), item, { merge: true });
+        }
+      }
+      if (payload.sessions) {
+        if (prevSessionsRef.current) {
+          const deleted = prevSessionsRef.current.filter(x => !payload.sessions!.some(y => y.id === x.id));
+          for (const item of deleted) {
+            await deleteDoc(doc(db, 'sessions', item.id));
+          }
+        }
+        for (const item of payload.sessions) {
+          if (!item.id) continue;
+          await setDoc(doc(db, 'sessions', item.id), item, { merge: true });
+        }
+      }
+      if (payload.articles) {
+        if (prevArticlesRef.current) {
+          const deleted = prevArticlesRef.current.filter(x => !payload.articles!.some(y => y.id === x.id));
+          for (const item of deleted) {
+            await deleteDoc(doc(db, 'articles', item.id));
+          }
+        }
+        for (const item of payload.articles) {
+          if (!item.id) continue;
+          await setDoc(doc(db, 'articles', item.id), item, { merge: true });
+        }
+      }
+      if (payload.gallery) {
+        if (prevGalleryRef.current) {
+          const deleted = prevGalleryRef.current.filter(x => !payload.gallery!.some(y => y.id === x.id));
+          for (const item of deleted) {
+            await deleteDoc(doc(db, 'gallery', item.id));
+          }
+        }
+        for (const item of payload.gallery) {
+          if (!item.id) continue;
+          await setDoc(doc(db, 'gallery', item.id), item, { merge: true });
+        }
+      }
+      if (payload.lmsModules) {
+        if (prevLmsModulesRef.current) {
+          const deleted = prevLmsModulesRef.current.filter(x => !payload.lmsModules!.some(y => y.id === x.id));
+          for (const item of deleted) {
+            await deleteDoc(doc(db, 'lmsModules', item.id));
+          }
+        }
+        for (const item of payload.lmsModules) {
+          if (!item.id) continue;
+          await setDoc(doc(db, 'lmsModules', item.id), item, { merge: true });
+        }
+      }
     } catch (e) {
-      console.error("Gagal sinkronisasi data ke cloud server:", e);
+      console.error("Gagal sinkronisasi data ke Cloud Firestore:", e);
     }
   };
 
-  // On mount: Fetch unified data from express server data-store.json (using timestamp to bypass device cache)
+  // On mount: Attach Realtime Subscriptions to Firestore Collections & Documents
   useEffect(() => {
+    let unsubs: (() => void)[] = [];
+
     async function initDatabase() {
       try {
-        const response = await fetch(`/api/data?t=${Date.now()}`);
-        if (response.ok) {
-          const db = await response.json();
-          if (db && !db.empty) {
-            if (db.siteConfig) {
-              setSiteConfig(db.siteConfig);
-              prevSiteConfigRef.current = db.siteConfig;
-            }
-            if (db.members) {
-              setMembers(db.members);
-              prevMembersRef.current = db.members;
-            }
-            if (db.sessions) {
-              setSessions(db.sessions);
-              prevSessionsRef.current = db.sessions;
-            }
-            if (db.articles) {
-              setArticles(db.articles);
-              prevArticlesRef.current = db.articles;
-            }
-            if (db.gallery) {
-              setGallery(db.gallery);
-              prevGalleryRef.current = db.gallery;
-            }
-            if (db.lmsModules) {
-              setLmsModules(db.lmsModules);
-              prevLmsModulesRef.current = db.lmsModules;
-            }
-          } else {
-            // Newly booted environment. Push the client defaults to build the initial data-store.json!
-            const payload = {
-              siteConfig: siteConfig || INITIAL_SITE_CONFIG,
-              members: members || [],
-              sessions: sessions || INITIAL_SESSIONS,
-              articles: articles || INITIAL_ARTICLES,
-              gallery: gallery || INITIAL_GALLERY,
-              lmsModules: lmsModules || INITIAL_LMS_MODULES
-            };
-            await fetch('/api/save', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-            prevSiteConfigRef.current = payload.siteConfig;
-            prevMembersRef.current = payload.members;
-            prevSessionsRef.current = payload.sessions;
-            prevArticlesRef.current = payload.articles;
-            prevGalleryRef.current = payload.gallery;
-            prevLmsModulesRef.current = payload.lmsModules;
-          }
+        await testConnection();
+        // Check if DB configuration document is present on Firestore. If not, seed Firestore first!
+        const existingConfig = await fetchSiteConfig();
+        if (!existingConfig) {
+          console.log("Firestore is completely empty. Seeding JATC defaults straight to the cloud...");
+          await uploadFullAppDb({
+            siteConfig: siteConfig || INITIAL_SITE_CONFIG,
+            members: members || [],
+            sessions: sessions || INITIAL_SESSIONS,
+            articles: articles || INITIAL_ARTICLES,
+            gallery: gallery || INITIAL_GALLERY,
+            lmsModules: lmsModules || INITIAL_LMS_MODULES
+          });
         }
       } catch (err) {
-        console.warn("Koneksi gagal ke server, menggunakan data lokal cached:", err);
-      } finally {
-        if (!prevSiteConfigRef.current) prevSiteConfigRef.current = siteConfig;
-        if (!prevMembersRef.current) prevMembersRef.current = members;
-        if (!prevSessionsRef.current) prevSessionsRef.current = sessions;
-        if (!prevArticlesRef.current) prevArticlesRef.current = articles;
-        if (!prevGalleryRef.current) prevGalleryRef.current = gallery;
-        if (!prevLmsModulesRef.current) prevLmsModulesRef.current = lmsModules;
-        setDataLoaded(true);
+        console.warn("Layanan Cloud Firestore tidak terhubung sempurna, mencoba menyambungkan via snapshots...", err);
       }
+
+      // 1. Live Sync Site Config
+      const unsubConfig = onSnapshot(doc(db, 'config', 'site'), (snap) => {
+        if (snap.exists()) {
+          const cloudConfig = snap.data()?.siteConfig;
+          if (cloudConfig) {
+            setSiteConfig(cloudConfig);
+            prevSiteConfigRef.current = cloudConfig;
+          }
+        }
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, 'config/site');
+      });
+      unsubs.push(unsubConfig);
+
+      // 2. Live Sync Members
+      const unsubMembers = onSnapshot(collection(db, 'members'), (snap) => {
+        const list: Member[] = [];
+        snap.forEach((doc) => {
+          list.push(doc.data() as Member);
+        });
+        list.sort((a, b) => new Date(b.registeredAt || 0).getTime() - new Date(a.registeredAt || 0).getTime());
+        setMembers(list);
+        prevMembersRef.current = list;
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, 'members');
+      });
+      unsubs.push(unsubMembers);
+
+      // 3. Live Sync Sessions
+      const unsubSessions = onSnapshot(collection(db, 'sessions'), (snap) => {
+        const list: LearningSession[] = [];
+        snap.forEach((doc) => {
+          list.push(doc.data() as LearningSession);
+        });
+        setSessions(list);
+        prevSessionsRef.current = list;
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, 'sessions');
+      });
+      unsubs.push(unsubSessions);
+
+      // 4. Live Sync Articles
+      const unsubArticles = onSnapshot(collection(db, 'articles'), (snap) => {
+        const list: Article[] = [];
+        snap.forEach((doc) => {
+          list.push(doc.data() as Article);
+        });
+        list.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+        setArticles(list);
+        prevArticlesRef.current = list;
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, 'articles');
+      });
+      unsubs.push(unsubArticles);
+
+      // 5. Live Sync Gallery
+      const unsubGallery = onSnapshot(collection(db, 'gallery'), (snap) => {
+        const list: GalleryItem[] = [];
+        snap.forEach((doc) => {
+          list.push(doc.data() as GalleryItem);
+        });
+        setGallery(list);
+        prevGalleryRef.current = list;
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, 'gallery');
+      });
+      unsubs.push(unsubGallery);
+
+      // 6. Live Sync LMS Modules
+      const unsubLms = onSnapshot(collection(db, 'lmsModules'), (snap) => {
+        const list: LMSModule[] = [];
+        snap.forEach((doc) => {
+          list.push(doc.data() as LMSModule);
+        });
+        setLmsModules(list);
+        prevLmsModulesRef.current = list;
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, 'lmsModules');
+      });
+      unsubs.push(unsubLms);
+
+      setDataLoaded(true);
     }
+
     initDatabase();
+
+    return () => {
+      unsubs.forEach(fn => fn());
+    };
   }, []);
 
   // Synchronous local storage update immediately on any state change
