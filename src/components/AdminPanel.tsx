@@ -137,6 +137,16 @@ export default function AdminPanel({
   const [deleteConfirmHistId, setDeleteConfirmHistId] = useState<string | null>(null);
   const [deleteConfirmTpId, setDeleteConfirmTpId] = useState<string | null>(null);
   const [deleteConfirmInstId, setDeleteConfirmInstId] = useState<string | null>(null);
+  const [deleteConfirmArtId, setDeleteConfirmArtId] = useState<string | null>(null);
+  const [deleteConfirmSessId, setDeleteConfirmSessId] = useState<string | null>(null);
+  const [deleteConfirmMemId, setDeleteConfirmMemId] = useState<string | null>(null);
+  const [deleteConfirmLmsId, setDeleteConfirmLmsId] = useState<string | null>(null);
+  const [deleteConfirmGalId, setDeleteConfirmGalId] = useState<string | null>(null);
+  const [deleteConfirmWebinarId, setDeleteConfirmWebinarId] = useState<string | null>(null);
+  const [deleteConfirmImportanceId, setDeleteConfirmImportanceId] = useState<string | null>(null);
+  const [deleteConfirmFailureId, setDeleteConfirmFailureId] = useState<string | null>(null);
+  const [deleteConfirmGoalId, setDeleteConfirmGoalId] = useState<string | null>(null);
+  const [deleteConfirmMethodologyId, setDeleteConfirmMethodologyId] = useState<string | null>(null);
 
   const [historyList, setHistoryList] = useState<JatcHistoryItem[]>(siteConfig.about.history || []);
   const [newHistTitle, setNewHistTitle] = useState('');
@@ -276,9 +286,7 @@ export default function AdminPanel({
   };
 
   const handleDeleteWebinarPart = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus bagian webinar ini?')) {
-      setWebinarParts(webinarParts.filter(p => p.id !== id));
-    }
+    setWebinarParts(webinarParts.filter(p => p.id !== id));
   };
 
   // Modern Era: Importance Reasons handlers
@@ -297,9 +305,7 @@ export default function AdminPanel({
   };
 
   const handleDeleteImportanceReason = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus poin penting ini?')) {
-      setImportanceReasons(importanceReasons.filter(r => r.id !== id));
-    }
+    setImportanceReasons(importanceReasons.filter(r => r.id !== id));
   };
 
   // Failure Reasons handlers
@@ -317,9 +323,7 @@ export default function AdminPanel({
   };
 
   const handleDeleteFailureReason = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus alasan kegagalan ini?')) {
-      setFailureReasons(failureReasons.filter(f => f.id !== id));
-    }
+    setFailureReasons(failureReasons.filter(f => f.id !== id));
   };
 
   // Learning Goals handlers
@@ -339,15 +343,13 @@ export default function AdminPanel({
   };
 
   const handleDeleteLearningGoal = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus sasaran pembelajaran ini?')) {
-      const filtered = learningGoals.filter(g => g.id !== id);
-      const reindexed = filtered.map((g, idx) => ({
-        ...g,
-        number: idx + 1,
-        goalId: `goal-${idx + 1}`
-      }));
-      setLearningGoals(reindexed);
-    }
+    const filtered = learningGoals.filter(g => g.id !== id);
+    const reindexed = filtered.map((g, idx) => ({
+      ...g,
+      number: idx + 1,
+      goalId: `goal-${idx + 1}`
+    }));
+    setLearningGoals(reindexed);
   };
 
   // Methodologies handlers
@@ -368,9 +370,7 @@ export default function AdminPanel({
   };
 
   const handleDeleteMethodology = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus metodologi pengajaran ini?')) {
-      setMethodologies(methodologies.filter(m => m.id !== id));
-    }
+    setMethodologies(methodologies.filter(m => m.id !== id));
   };
 
   // Target Participants handlers
@@ -382,38 +382,22 @@ export default function AdminPanel({
     };
     const newList = [...targetParticipants, newTp];
     setTargetParticipants(newList);
-    setSiteConfig({
-      ...siteConfig,
-      targetParticipants: newList
-    });
     setEditingTpId(newTp.id); // Open edit mode instantly for the new item!
   };
 
   const handleUpdateTargetParticipantText = (id: string, text: string) => {
     const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, text } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
     setTargetParticipants(newList);
-    setSiteConfig({
-      ...siteConfig,
-      targetParticipants: newList
-    });
   };
 
   const handleUpdateTargetParticipantImage = (id: string, imageUrl: string) => {
     const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
     setTargetParticipants(newList);
-    setSiteConfig({
-      ...siteConfig,
-      targetParticipants: newList
-    });
   };
 
   const handleDeleteTargetParticipant = (id: string) => {
     const newList = targetParticipants.filter(tp => tp && typeof tp === 'object' && 'id' in tp && tp.id !== id);
     setTargetParticipants(newList);
-    setSiteConfig({
-      ...siteConfig,
-      targetParticipants: newList
-    });
     if (editingTpId === id) setEditingTpId(null);
   };
 
@@ -423,37 +407,33 @@ export default function AdminPanel({
     const result = await compressImage(file, 800, 600, 0.75);
     const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl: result } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
     setTargetParticipants(newList);
-    setSiteConfig({
-      ...siteConfig,
-      targetParticipants: newList
-    });
   };
 
   const handleHeroBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await compressImage(file, 1600, 1000, 0.7);
+    const result = await compressImage(file, 1200, 800, 0.65);
     setBackgroundImageUrl(result);
   };
 
   const handleHeroBgUpload2 = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await compressImage(file, 1600, 1000, 0.7);
+    const result = await compressImage(file, 1200, 800, 0.65);
     setBackgroundImageUrl2(result);
   };
 
   const handleHeroBgUpload3 = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await compressImage(file, 1600, 1000, 0.7);
+    const result = await compressImage(file, 1200, 800, 0.65);
     setBackgroundImageUrl3(result);
   };
 
   const handleHeroBgUpload4 = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await compressImage(file, 1600, 1000, 0.7);
+    const result = await compressImage(file, 1200, 800, 0.65);
     setBackgroundImageUrl4(result);
   };
 
@@ -466,38 +446,22 @@ export default function AdminPanel({
     };
     const newList = [...institutions, newInst];
     setInstitutions(newList);
-    setSiteConfig({
-      ...siteConfig,
-      institutions: newList
-    });
     setEditingInstId(newInst.id); // Open edit mode instantly for the new institution!
   };
 
   const handleUpdateInstitutionName = (id: string, name: string) => {
     const newList = institutions.map(inst => inst.id === id ? { ...inst, name } : inst);
     setInstitutions(newList);
-    setSiteConfig({
-      ...siteConfig,
-      institutions: newList
-    });
   };
 
   const handleUpdateInstitutionLogo = (id: string, logoUrl: string) => {
     const newList = institutions.map(inst => inst.id === id ? { ...inst, logoUrl } : inst);
     setInstitutions(newList);
-    setSiteConfig({
-      ...siteConfig,
-      institutions: newList
-    });
   };
 
   const handleDeleteInstitution = (id: string) => {
     const newList = institutions.filter(inst => inst.id !== id);
     setInstitutions(newList);
-    setSiteConfig({
-      ...siteConfig,
-      institutions: newList
-    });
     if (editingInstId === id) setEditingInstId(null);
   };
 
@@ -516,13 +480,6 @@ export default function AdminPanel({
     };
     const newList = [...historyList, newItem];
     setHistoryList(newList);
-    setSiteConfig({
-      ...siteConfig,
-      about: {
-        ...siteConfig.about,
-        history: newList
-      }
-    });
     setNewHistTitle('');
     setNewHistYear('');
     setNewHistDesc('');
@@ -532,25 +489,11 @@ export default function AdminPanel({
   const handleUpdateHistoryItem = (id: string, field: keyof JatcHistoryItem, value: any) => {
     const newList = historyList.map(item => item.id === id ? { ...item, [field]: value } : item);
     setHistoryList(newList);
-    setSiteConfig({
-      ...siteConfig,
-      about: {
-        ...siteConfig.about,
-        history: newList
-      }
-    });
   };
 
   const handleDeleteHistoryItem = (id: string) => {
     const newList = historyList.filter(item => item.id !== id);
     setHistoryList(newList);
-    setSiteConfig({
-      ...siteConfig,
-      about: {
-        ...siteConfig.about,
-        history: newList
-      }
-    });
     if (editingHistId === id) setEditingHistId(null);
   };
 
@@ -697,9 +640,8 @@ export default function AdminPanel({
 
   // Delete Article
   const handleDeleteArticle = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus artikel ini?')) {
-      setArticles(articles.filter(a => a.id !== id));
-    }
+    setArticles(articles.filter(a => a.id !== id));
+    if (deleteConfirmArtId === id) setDeleteConfirmArtId(null);
   };
 
   // Add Session
@@ -730,9 +672,8 @@ export default function AdminPanel({
 
   // Delete Session
   const handleDeleteSession = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus jadwal sesi ini?')) {
-      setSessions(sessions.filter(s => s.id !== id));
-    }
+    setSessions(sessions.filter(s => s.id !== id));
+    if (deleteConfirmSessId === id) setDeleteConfirmSessId(null);
   };
 
   // Approve member
@@ -747,9 +688,8 @@ export default function AdminPanel({
 
   // Delete member
   const handleDeleteMember = (id: string) => {
-    if (confirm('Hapus pendaftaran anggota ini dari database?')) {
-      setMembers(members.filter(m => m.id !== id));
-    }
+    setMembers(members.filter(m => m.id !== id));
+    if (deleteConfirmMemId === id) setDeleteConfirmMemId(null);
   };
 
   // LMS actions
@@ -780,9 +720,8 @@ export default function AdminPanel({
   };
 
   const handleDeleteLMS = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus materi kurikulum LMS ini?')) {
-      setLmsModules(lmsModules.filter(m => m.id !== id));
-    }
+    setLmsModules(lmsModules.filter(m => m.id !== id));
+    if (deleteConfirmLmsId === id) setDeleteConfirmLmsId(null);
   };
 
   const handleUpdateLMS = (e: React.FormEvent) => {
@@ -831,9 +770,8 @@ export default function AdminPanel({
 
   // Delete Gallery item
   const handleDeleteGallery = (id: string) => {
-    if (confirm('Hapus foto dari galeri?')) {
-      setGallery(gallery.filter(g => g.id !== id));
-    }
+    setGallery(gallery.filter(g => g.id !== id));
+    if (deleteConfirmGalId === id) setDeleteConfirmGalId(null);
   };
 
   // Export registrations as CSV
@@ -1387,15 +1325,35 @@ export default function AdminPanel({
                                 className="w-full text-xs rounded border border-neutral-200 p-1.5 focus:border-[#a18241] outline-none font-sans text-neutral-800"
                               />
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteWebinarPart(partItem.id)}
-                              className="self-end sm:self-auto inline-flex items-center gap-1 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100/60 p-1.5 rounded-lg border border-red-200/40 text-[10px] transition-all cursor-pointer"
-                              title="Hapus Bagian"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span className="sm:hidden font-sans font-bold">Hapus</span>
-                            </button>
+                            {deleteConfirmWebinarId === partItem.id ? (
+                              <div className="self-end sm:self-auto flex items-center gap-1 bg-red-50 border border-red-200 rounded p-1">
+                                <span className="text-[8px] text-red-600 font-bold px-0.5">Hapus?</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteWebinarPart(partItem.id)}
+                                  className="bg-red-600 hover:bg-red-700 text-white font-bold text-[8px] px-1 rounded shadow-sm"
+                                >
+                                  Ya
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteConfirmWebinarId(null)}
+                                  className="text-gray-500 hover:text-gray-700 text-[8px] font-semibold px-0.5 rounded"
+                                >
+                                  Batal
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setDeleteConfirmWebinarId(partItem.id)}
+                                className="self-end sm:self-auto inline-flex items-center gap-1 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100/60 p-1.5 rounded-lg border border-red-200/40 text-[10px] transition-all cursor-pointer"
+                                title="Hapus Bagian"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span className="sm:hidden font-sans font-bold">Hapus</span>
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -1440,14 +1398,34 @@ export default function AdminPanel({
                             <div key={reason.id} className="p-3 bg-neutral-50 rounded-lg border border-neutral-200/80 space-y-2 relative">
                               <div className="flex justify-between items-center pb-1 border-b border-neutral-200/60">
                                 <span className="text-[10px] font-mono text-[#a18241] font-bold">Analisis Manfaat #{idx + 1}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteImportanceReason(reason.id)}
-                                  className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded transition-all cursor-pointer"
-                                  title="Hapus"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
+                                {deleteConfirmImportanceId === reason.id ? (
+                                  <div className="flex items-center gap-1 bg-red-50 border border-red-200 rounded p-0.5">
+                                    <span className="text-[8px] text-red-600 font-bold px-0.5">Hapus?</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteImportanceReason(reason.id)}
+                                      className="bg-red-600 hover:bg-red-700 text-white font-bold text-[8px] px-1 rounded shadow-sm"
+                                    >
+                                      Ya
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setDeleteConfirmImportanceId(null)}
+                                      className="text-gray-500 hover:text-gray-700 text-[8px] font-semibold px-0.5 rounded"
+                                    >
+                                      Batal
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteConfirmImportanceId(reason.id)}
+                                    className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded transition-all cursor-pointer"
+                                    title="Hapus"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <div className="sm:col-span-2">
@@ -1520,14 +1498,34 @@ export default function AdminPanel({
                             <div key={fail.id} className="p-3 bg-red-50/30 rounded-lg border border-red-200/50 space-y-2">
                               <div className="flex justify-between items-center pb-1 border-b border-red-200/20">
                                 <span className="text-[10px] font-mono text-red-900/60 font-bold">Faktor Masalah #{idx + 1}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteFailureReason(fail.id)}
-                                  className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded transition-all cursor-pointer"
-                                  title="Hapus"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
+                                {deleteConfirmFailureId === fail.id ? (
+                                  <div className="flex items-center gap-1 bg-red-100 border border-red-200 rounded p-0.5">
+                                    <span className="text-[8px] text-red-700 font-bold px-0.5">Hapus?</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteFailureReason(fail.id)}
+                                      className="bg-red-600 hover:bg-red-700 text-white font-bold text-[8px] px-1 rounded shadow-sm"
+                                    >
+                                      Ya
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setDeleteConfirmFailureId(null)}
+                                      className="text-gray-600 hover:text-gray-800 text-[8px] font-semibold px-0.5 rounded"
+                                    >
+                                      Batal
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteConfirmFailureId(fail.id)}
+                                    className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded transition-all cursor-pointer"
+                                    title="Hapus"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
                               </div>
                               <div>
                                 <label className="block text-[8px] font-bold uppercase text-red-700/60 mb-0.5 font-mono">Judul Hambatan (e.g. Istilah/Mindset):</label>
@@ -1607,12 +1605,22 @@ export default function AdminPanel({
                         </label>
                         <div className="flex gap-3 items-center">
                           {learningGoalsArrowUrl ? (
-                            <img
-                              src={learningGoalsArrowUrl}
-                              alt="Logo Panah Adat"
-                              className="w-12 h-12 object-contain rounded bg-transparent border border-neutral-200/60 p-0.5 mix-blend-multiply"
-                              referrerPolicy="no-referrer"
-                            />
+                            <div className="relative group shrink-0">
+                              <img
+                                src={learningGoalsArrowUrl}
+                                alt="Logo Panah Adat"
+                                className="w-12 h-12 object-contain rounded bg-transparent border border-neutral-200/60 p-0.5 mix-blend-multiply"
+                                referrerPolicy="no-referrer"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setLearningGoalsArrowUrl('')}
+                                className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full p-0.5 shadow-sm hover:bg-red-700 transition-colors cursor-pointer"
+                                title="Hapus Gambar Panah"
+                              >
+                                <X className="w-2.5 h-2.5" />
+                              </button>
+                            </div>
                           ) : (
                             <div className="w-12 h-12 rounded bg-neutral-100 flex items-center justify-center text-[7px] text-gray-400">No Image</div>
                           )}
@@ -1655,14 +1663,34 @@ export default function AdminPanel({
                             <div key={lg.id} className="p-3 bg-neutral-50 rounded-lg border border-neutral-200/85 space-y-2">
                               <div className="flex justify-between items-center pb-1 border-b border-neutral-200/60">
                                 <span className="text-[10px] font-mono text-[#a18241] font-bold">Goal #{lg.number}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteLearningGoal(lg.id)}
-                                  className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded transition-all cursor-pointer"
-                                  title="Hapus"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
+                                {deleteConfirmGoalId === lg.id ? (
+                                  <div className="flex items-center gap-1 bg-red-50 border border-red-200 rounded p-0.5">
+                                    <span className="text-[8px] text-red-600 font-bold px-0.5">Hapus?</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteLearningGoal(lg.id)}
+                                      className="bg-red-600 hover:bg-red-700 text-white font-bold text-[8px] px-1 rounded shadow-sm"
+                                    >
+                                      Ya
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setDeleteConfirmGoalId(null)}
+                                      className="text-gray-500 hover:text-gray-700 text-[8px] font-semibold px-0.5 rounded"
+                                    >
+                                      Batal
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteConfirmGoalId(lg.id)}
+                                    className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded transition-all cursor-pointer"
+                                    title="Hapus"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
                               </div>
                               <div className="grid grid-cols-4 gap-2">
                                 <div className="col-span-1">
@@ -1726,14 +1754,34 @@ export default function AdminPanel({
                             <div key={meth.id} className="p-3 bg-amber-50/10 rounded-lg border border-neutral-300/60 space-y-2">
                               <div className="flex justify-between items-center pb-1 border-b border-amber-200/20">
                                 <span className="text-[10px] font-mono text-amber-950 font-bold">Metode #{idx + 1}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteMethodology(meth.id)}
-                                  className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded transition-all cursor-pointer"
-                                  title="Hapus"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
+                                {deleteConfirmMethodologyId === meth.id ? (
+                                  <div className="flex items-center gap-1 bg-red-50 border border-red-200 rounded p-0.5">
+                                    <span className="text-[8px] text-red-600 font-bold px-0.5">Hapus?</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteMethodology(meth.id)}
+                                      className="bg-red-600 hover:bg-red-700 text-white font-bold text-[8px] px-1 rounded shadow-sm"
+                                    >
+                                      Ya
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setDeleteConfirmMethodologyId(null)}
+                                      className="text-gray-500 hover:text-gray-700 text-[8px] font-semibold px-0.5 rounded"
+                                    >
+                                      Batal
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteConfirmMethodologyId(meth.id)}
+                                    className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1 rounded transition-all cursor-pointer"
+                                    title="Hapus"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <div>
@@ -2741,13 +2789,34 @@ export default function AdminPanel({
                                       </button>
                                     </>
                                   )}
-                                  <button
-                                    title="Hapus Dari Database"
-                                    onClick={() => handleDeleteMember(member.id)}
-                                    className="p-1 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
+                                  {deleteConfirmMemId === member.id ? (
+                                    <div className="flex items-center gap-1 bg-red-50 border border-red-250 p-0.5 rounded shadow-sm text-[8px] font-bold text-red-600">
+                                      <span>Hapus?</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteMember(member.id)}
+                                        className="bg-red-650 hover:bg-red-700 bg-red-600 text-white font-bold text-[8px] px-1 rounded"
+                                      >
+                                        Ya
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setDeleteConfirmMemId(null)}
+                                        className="text-gray-500 hover:text-gray-700 font-bold"
+                                      >
+                                        No
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      title="Hapus Dari Database"
+                                      onClick={() => setDeleteConfirmMemId(member.id)}
+                                      className="p-1 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
                                 </div>
                               </td>
                             </tr>
@@ -3138,13 +3207,33 @@ export default function AdminPanel({
                               >
                                 <Edit3 className="w-3 h-3" /> Edit
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteLMS(mod.id)}
-                                className="p-1.5 bg-white hover:bg-red-50 hover:text-red-700 text-neutral-400 rounded-lg border border-neutral-200 transition-colors cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {deleteConfirmLmsId === mod.id ? (
+                                <div className="flex items-center gap-1 bg-red-50 border border-red-200 rounded-lg p-0.5 text-[10px]">
+                                  <span className="text-red-650 font-bold px-1">Yakin?</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteLMS(mod.id)}
+                                    className="bg-red-600 hover:bg-red-700 text-white font-bold px-2 py-0.5 rounded shadow-sm"
+                                  >
+                                    Ya
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteConfirmLmsId(null)}
+                                    className="text-gray-500 hover:text-gray-700 font-semibold px-1"
+                                  >
+                                    Batal
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteConfirmLmsId(mod.id)}
+                                  className="p-1.5 bg-white hover:bg-red-50 hover:text-red-700 text-neutral-400 rounded-lg border border-neutral-200 transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </>
                         )}
@@ -3417,14 +3506,34 @@ export default function AdminPanel({
                               >
                                 <Edit3 className="w-3 w-3" /> Sunting
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteSession(sess.id)}
-                                className="p-1.5 bg-white hover:bg-red-50 hover:text-red-700 text-neutral-400 rounded-lg border border-neutral-200 transition-colors cursor-pointer"
-                                title="Hapus Jadwal"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {deleteConfirmSessId === sess.id ? (
+                                <div className="flex items-center gap-1 bg-red-50 border border-red-200 rounded-lg p-0.5 text-[10px]">
+                                  <span className="text-red-650 font-bold px-1">Yakin?</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteSession(sess.id)}
+                                    className="bg-red-600 hover:bg-red-700 text-white font-bold px-2 py-0.5 rounded shadow-sm"
+                                  >
+                                    Ya
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteConfirmSessId(null)}
+                                    className="text-gray-500 hover:text-gray-700 font-semibold px-1"
+                                  >
+                                    Batal
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteConfirmSessId(sess.id)}
+                                  className="p-1.5 bg-white hover:bg-red-50 hover:text-red-700 text-neutral-400 rounded-lg border border-neutral-200 transition-colors cursor-pointer"
+                                  title="Hapus Jadwal"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </>
                         )}
@@ -3762,21 +3871,46 @@ export default function AdminPanel({
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.25">
+                        <div className="flex items-center gap-1.5">
                           <button
+                            type="button"
                             onClick={() => setEditingArticle(art)}
                             className="p-1.5 bg-white hover:bg-blue-50 text-brand-blue rounded-lg border border-neutral-200 flex items-center justify-center cursor-pointer font-bold inline-flex text-[10px]"
                             title="Edit Artikel"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
-                          <button
-                            onClick={() => handleDeleteArticle(art.id)}
-                            className="p-1.5 bg-white hover:bg-red-50 hover:text-red-700 text-neutral-400 rounded-lg border border-neutral-200 flex items-center justify-center cursor-pointer"
-                            title="Hapus Artikel"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {deleteConfirmArtId === art.id ? (
+                            <div className="flex items-center gap-1 bg-red-50 border border-red-200 rounded-lg p-0.5">
+                              <span className="text-[8px] text-red-600 font-bold px-1">Yakin?</span>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteArticle(art.id)}
+                                className="bg-red-600 hover:bg-red-700 text-white font-bold text-[8.5px] px-1.5 py-0.5 rounded shadow-sm"
+                              >
+                                Ya
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteConfirmArtId(null)}
+                                className="text-gray-500 hover:text-gray-700 text-[8.5px] font-semibold px-1 rounded"
+                              >
+                                Batal
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingArticle(null);
+                                setDeleteConfirmArtId(art.id);
+                              }}
+                              className="p-1.5 bg-white hover:bg-red-50 hover:text-red-700 text-neutral-400 rounded-lg border border-neutral-200 flex items-center justify-center cursor-pointer"
+                              title="Hapus Artikel"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))
@@ -4008,23 +4142,50 @@ export default function AdminPanel({
                         </div>
 
                         {/* Hover utility actions overlay */}
-                        <div className="absolute top-1 right-1 flex gap-1">
-                          {/* edit action */}
-                          <button
-                            onClick={() => setEditingGallery(item)}
-                            className="p-1 bg-white hover:bg-neutral-100 text-brand-blue rounded border transition-all cursor-pointer"
-                            title="Edit Media"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                          </button>
-                          {/* delete action */}
-                          <button
-                            onClick={() => handleDeleteGallery(item.id)}
-                            className="p-1 bg-red-600 text-white rounded hover:bg-red-700 pointer-events-auto transition-all cursor-pointer"
-                            title="Hapus Media"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
+                        <div className="absolute top-1 right-1 flex gap-1 items-center">
+                          {deleteConfirmGalId === item.id ? (
+                            <div className="flex items-center gap-1 bg-red-600 border border-red-705 p-0.5 rounded text-[8px] font-bold text-white shadow-sm">
+                              <span className="px-0.5">Yakin?</span>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteGallery(item.id)}
+                                className="bg-white text-red-600 font-bold text-[8px] px-1 rounded hover:bg-neutral-100"
+                              >
+                                Ya
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteConfirmGalId(null)}
+                                className="text-white hover:text-white/80 font-bold text-[8px] px-0.5"
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              {/* edit action */}
+                              <button
+                                type="button"
+                                onClick={() => setEditingGallery(item)}
+                                className="p-1 bg-white hover:bg-neutral-100 text-brand-blue rounded border transition-all cursor-pointer"
+                                title="Edit Media"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </button>
+                              {/* delete action */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingGallery(null);
+                                  setDeleteConfirmGalId(item.id);
+                                }}
+                                className="p-1 bg-red-600 text-white rounded hover:bg-red-700 pointer-events-auto transition-all cursor-pointer"
+                                title="Hapus Media"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))
