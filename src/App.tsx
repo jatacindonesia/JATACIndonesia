@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Globe, Briefcase, BookOpen, Award, Phone, Mail, MapPin, Clock, User, LogIn, Lock, Settings,
   Layers, MessageSquare, Calendar, ChevronRight, ChevronLeft, Sparkles, Plus, Menu, X, GraduationCap, CheckCircle,
@@ -130,6 +130,7 @@ export default function App() {
   const [partnerIdx, setPartnerIdx] = useState(0);
 
   const [dataLoaded, setDataLoaded] = useState(false);
+  const isInitialLoadRef = useRef(true);
 
   // Sync state helper to write to backend
   const saveToServer = async (payload: Partial<{
@@ -186,53 +187,56 @@ export default function App() {
         console.warn("Koneksi gagal ke server, menggunakan data lokal cached:", err);
       } finally {
         setDataLoaded(true);
+        setTimeout(() => {
+          isInitialLoadRef.current = false;
+        }, 1500);
       }
     }
     initDatabase();
   }, []);
 
-  // Sync to localStorages on state changes
+  // Synchronous local storage update immediately on any state change
   useEffect(() => {
     localStorage.setItem('jatc_site_config', JSON.stringify(siteConfig));
-    if (dataLoaded) {
-      saveToServer({ siteConfig });
-    }
-  }, [siteConfig, dataLoaded]);
+  }, [siteConfig]);
 
   useEffect(() => {
     localStorage.setItem('jatc_members', JSON.stringify(members));
-    if (dataLoaded) {
-      saveToServer({ members });
-    }
-  }, [members, dataLoaded]);
+  }, [members]);
 
   useEffect(() => {
     localStorage.setItem('jatc_sessions', JSON.stringify(sessions));
-    if (dataLoaded) {
-      saveToServer({ sessions });
-    }
-  }, [sessions, dataLoaded]);
+  }, [sessions]);
 
   useEffect(() => {
     localStorage.setItem('jatc_articles', JSON.stringify(articles));
-    if (dataLoaded) {
-      saveToServer({ articles });
-    }
-  }, [articles, dataLoaded]);
+  }, [articles]);
 
   useEffect(() => {
     localStorage.setItem('jatc_gallery', JSON.stringify(gallery));
-    if (dataLoaded) {
-      saveToServer({ gallery });
-    }
-  }, [gallery, dataLoaded]);
+  }, [gallery]);
 
   useEffect(() => {
     localStorage.setItem('jatc_lms_modules', JSON.stringify(lmsModules));
-    if (dataLoaded) {
-      saveToServer({ lmsModules });
-    }
-  }, [lmsModules, dataLoaded]);
+  }, [lmsModules]);
+
+  // A single unified sync function that debounces cloud writes to prevent race conditions on multi-device use
+  useEffect(() => {
+    if (!dataLoaded || isInitialLoadRef.current) return;
+
+    const delayDebounce = setTimeout(() => {
+      saveToServer({
+        siteConfig,
+        members,
+        sessions,
+        articles,
+        gallery,
+        lmsModules
+      });
+    }, 1000); // 1-second debounce to batch multiple updates and prevent parallel write collisions
+
+    return () => clearTimeout(delayDebounce);
+  }, [siteConfig, members, sessions, articles, gallery, lmsModules, dataLoaded]);
 
   useEffect(() => {
     if (loggedInMember) {
