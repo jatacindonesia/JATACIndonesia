@@ -31,6 +31,8 @@ ensureDataFile();
 // 1. Get entire application data state
 app.get("/api/data", (req, res) => {
   try {
+    // Prevent intermediate caches or browser storage from returning stale configurations
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     if (!fs.existsSync(DATA_FILE)) {
       return res.json({ empty: true });
     }

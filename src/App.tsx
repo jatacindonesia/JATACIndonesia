@@ -130,7 +130,14 @@ export default function App() {
   const [partnerIdx, setPartnerIdx] = useState(0);
 
   const [dataLoaded, setDataLoaded] = useState(false);
-  const isInitialLoadRef = useRef(true);
+
+  // Stable state tracking to prevent overwriting cloud storage with stale local values on startup
+  const prevSiteConfigRef = useRef<SiteConfig | null>(null);
+  const prevMembersRef = useRef<Member[] | null>(null);
+  const prevSessionsRef = useRef<LearningSession[] | null>(null);
+  const prevArticlesRef = useRef<Article[] | null>(null);
+  const prevGalleryRef = useRef<GalleryItem[] | null>(null);
+  const prevLmsModulesRef = useRef<LMSModule[] | null>(null);
 
   // Sync state helper to write to backend
   const saveToServer = async (payload: Partial<{
@@ -153,43 +160,71 @@ export default function App() {
     }
   };
 
-  // On mount: Fetch unified data from express server data-store.json
+  // On mount: Fetch unified data from express server data-store.json (using timestamp to bypass device cache)
   useEffect(() => {
     async function initDatabase() {
       try {
-        const response = await fetch('/api/data');
+        const response = await fetch(`/api/data?t=${Date.now()}`);
         if (response.ok) {
           const db = await response.json();
           if (db && !db.empty) {
-            if (db.siteConfig) setSiteConfig(db.siteConfig);
-            if (db.members) setMembers(db.members);
-            if (db.sessions) setSessions(db.sessions);
-            if (db.articles) setArticles(db.articles);
-            if (db.gallery) setGallery(db.gallery);
-            if (db.lmsModules) setLmsModules(db.lmsModules);
+            if (db.siteConfig) {
+              setSiteConfig(db.siteConfig);
+              prevSiteConfigRef.current = db.siteConfig;
+            }
+            if (db.members) {
+              setMembers(db.members);
+              prevMembersRef.current = db.members;
+            }
+            if (db.sessions) {
+              setSessions(db.sessions);
+              prevSessionsRef.current = db.sessions;
+            }
+            if (db.articles) {
+              setArticles(db.articles);
+              prevArticlesRef.current = db.articles;
+            }
+            if (db.gallery) {
+              setGallery(db.gallery);
+              prevGalleryRef.current = db.gallery;
+            }
+            if (db.lmsModules) {
+              setLmsModules(db.lmsModules);
+              prevLmsModulesRef.current = db.lmsModules;
+            }
           } else {
             // Newly booted environment. Push the client defaults to build the initial data-store.json!
+            const payload = {
+              siteConfig: siteConfig || INITIAL_SITE_CONFIG,
+              members: members || [],
+              sessions: sessions || INITIAL_SESSIONS,
+              articles: articles || INITIAL_ARTICLES,
+              gallery: gallery || INITIAL_GALLERY,
+              lmsModules: lmsModules || INITIAL_LMS_MODULES
+            };
             await fetch('/api/save', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                siteConfig: siteConfig || INITIAL_SITE_CONFIG,
-                members: members || [],
-                sessions: sessions || INITIAL_SESSIONS,
-                articles: articles || INITIAL_ARTICLES,
-                gallery: gallery || INITIAL_GALLERY,
-                lmsModules: lmsModules || INITIAL_LMS_MODULES
-              })
+              body: JSON.stringify(payload)
             });
+            prevSiteConfigRef.current = payload.siteConfig;
+            prevMembersRef.current = payload.members;
+            prevSessionsRef.current = payload.sessions;
+            prevArticlesRef.current = payload.articles;
+            prevGalleryRef.current = payload.gallery;
+            prevLmsModulesRef.current = payload.lmsModules;
           }
         }
       } catch (err) {
         console.warn("Koneksi gagal ke server, menggunakan data lokal cached:", err);
       } finally {
+        if (!prevSiteConfigRef.current) prevSiteConfigRef.current = siteConfig;
+        if (!prevMembersRef.current) prevMembersRef.current = members;
+        if (!prevSessionsRef.current) prevSessionsRef.current = sessions;
+        if (!prevArticlesRef.current) prevArticlesRef.current = articles;
+        if (!prevGalleryRef.current) prevGalleryRef.current = gallery;
+        if (!prevLmsModulesRef.current) prevLmsModulesRef.current = lmsModules;
         setDataLoaded(true);
-        setTimeout(() => {
-          isInitialLoadRef.current = false;
-        }, 1500);
       }
     }
     initDatabase();
@@ -222,7 +257,18 @@ export default function App() {
 
   // A single unified sync function that debounces cloud writes to prevent race conditions on multi-device use
   useEffect(() => {
-    if (!dataLoaded || isInitialLoadRef.current) return;
+    if (!dataLoaded) return;
+
+    // Detect actual structural/identity modification after initial mount hydration
+    let hasChanged = false;
+    if (prevSiteConfigRef.current && prevSiteConfigRef.current !== siteConfig) hasChanged = true;
+    if (prevMembersRef.current && prevMembersRef.current !== members) hasChanged = true;
+    if (prevSessionsRef.current && prevSessionsRef.current !== sessions) hasChanged = true;
+    if (prevArticlesRef.current && prevArticlesRef.current !== articles) hasChanged = true;
+    if (prevGalleryRef.current && prevGalleryRef.current !== gallery) hasChanged = true;
+    if (prevLmsModulesRef.current && prevLmsModulesRef.current !== lmsModules) hasChanged = true;
+
+    if (!hasChanged) return;
 
     const delayDebounce = setTimeout(() => {
       saveToServer({
@@ -233,6 +279,13 @@ export default function App() {
         gallery,
         lmsModules
       });
+      // Stabilize tracking references
+      prevSiteConfigRef.current = siteConfig;
+      prevMembersRef.current = members;
+      prevSessionsRef.current = sessions;
+      prevArticlesRef.current = articles;
+      prevGalleryRef.current = gallery;
+      prevLmsModulesRef.current = lmsModules;
     }, 1000); // 1-second debounce to batch multiple updates and prevent parallel write collisions
 
     return () => clearTimeout(delayDebounce);
