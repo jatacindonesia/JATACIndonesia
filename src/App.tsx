@@ -179,7 +179,11 @@ export default function App() {
     setSiteConfig(next);
     localStorage.setItem('jatc_site_config', JSON.stringify(next));
     try {
-      await setDoc(doc(db, 'config', 'site'), { siteConfig: next, lastUpdated: new Date().toISOString() }, { merge: true });
+      const { institutions, ...restSiteConfig } = next || {};
+      await setDoc(doc(db, 'config', 'site'), { siteConfig: restSiteConfig, lastUpdated: new Date().toISOString() }, { merge: true });
+      if (institutions !== undefined) {
+        await setDoc(doc(db, 'config', 'institutions'), { institutions, lastUpdated: new Date().toISOString() }, { merge: true });
+      }
     } catch (e) {
       console.error("Gagal menyimpan siteConfig ke Firestore:", e);
     }
@@ -189,7 +193,8 @@ export default function App() {
     setMembers(next);
     localStorage.setItem('jatc_members', JSON.stringify(next));
     try {
-      const deleted = members.filter(x => !next.some(y => y.id === x.id));
+      const currentList = prevMembersRef.current || [];
+      const deleted = currentList.filter(x => !next.some(y => y.id === x.id));
       for (const item of deleted) {
         if (item.id) await deleteDoc(doc(db, 'members', item.id));
       }
@@ -205,7 +210,8 @@ export default function App() {
     setSessions(next);
     localStorage.setItem('jatc_sessions', JSON.stringify(next));
     try {
-      const deleted = sessions.filter(x => !next.some(y => y.id === x.id));
+      const currentList = prevSessionsRef.current || [];
+      const deleted = currentList.filter(x => !next.some(y => y.id === x.id));
       for (const item of deleted) {
         if (item.id) await deleteDoc(doc(db, 'sessions', item.id));
       }
@@ -221,7 +227,8 @@ export default function App() {
     setArticles(next);
     localStorage.setItem('jatc_articles', JSON.stringify(next));
     try {
-      const deleted = articles.filter(x => !next.some(y => y.id === x.id));
+      const currentList = prevArticlesRef.current || [];
+      const deleted = currentList.filter(x => !next.some(y => y.id === x.id));
       for (const item of deleted) {
         if (item.id) await deleteDoc(doc(db, 'articles', item.id));
       }
@@ -237,7 +244,8 @@ export default function App() {
     setGallery(next);
     localStorage.setItem('jatc_gallery', JSON.stringify(next));
     try {
-      const deleted = gallery.filter(x => !next.some(y => y.id === x.id));
+      const currentList = prevGalleryRef.current || [];
+      const deleted = currentList.filter(x => !next.some(y => y.id === x.id));
       for (const item of deleted) {
         if (item.id) await deleteDoc(doc(db, 'gallery', item.id));
       }
@@ -253,7 +261,8 @@ export default function App() {
     setLmsModules(next);
     localStorage.setItem('jatc_lms_modules', JSON.stringify(next));
     try {
-      const deleted = lmsModules.filter(x => !next.some(y => y.id === x.id));
+      const currentList = prevLmsModulesRef.current || [];
+      const deleted = currentList.filter(x => !next.some(y => y.id === x.id));
       for (const item of deleted) {
         if (item.id) await deleteDoc(doc(db, 'lmsModules', item.id));
       }
@@ -414,14 +423,46 @@ export default function App() {
         if (snap.exists()) {
           const cloudConfig = snap.data()?.siteConfig;
           if (cloudConfig) {
-            setSiteConfig(cloudConfig);
-            prevSiteConfigRef.current = cloudConfig;
+            setSiteConfig(prev => ({
+              ...prev,
+              ...cloudConfig,
+              institutions: prev?.institutions || cloudConfig.institutions || []
+            }));
+            if (prevSiteConfigRef.current) {
+              prevSiteConfigRef.current = {
+                ...prevSiteConfigRef.current,
+                ...cloudConfig,
+                institutions: prevSiteConfigRef.current.institutions || cloudConfig.institutions || []
+              };
+            }
           }
         }
       }, (error) => {
         handleFirestoreError(error, OperationType.GET, 'config/site');
       });
       unsubs.push(unsubConfig);
+
+      // 1B. Live Sync Institutions (Split to avoid Firestore 1MB size limit)
+      const unsubInstitutions = onSnapshot(doc(db, 'config', 'institutions'), (snap) => {
+        if (snap.exists()) {
+          const cloudInsts = snap.data()?.institutions;
+          if (cloudInsts) {
+            setSiteConfig(prev => ({
+              ...prev || {},
+              institutions: cloudInsts
+            } as SiteConfig));
+            if (prevSiteConfigRef.current) {
+              prevSiteConfigRef.current = {
+                ...prevSiteConfigRef.current || {},
+                institutions: cloudInsts
+              } as SiteConfig;
+            }
+          }
+        }
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, 'config/institutions');
+      });
+      unsubs.push(unsubInstitutions);
 
       // 2. Live Sync Members
       const unsubMembers = onSnapshot(collection(db, 'members'), (snap) => {
@@ -470,6 +511,8 @@ export default function App() {
         snap.forEach((doc) => {
           list.push(doc.data() as GalleryItem);
         });
+        // Sort gallery by ID descending so newly added are at the top
+        list.sort((a, b) => b.id.localeCompare(a.id));
         setGallery(list);
         prevGalleryRef.current = list;
       }, (error) => {

@@ -57,7 +57,17 @@ export async function fetchAllDbData(): Promise<{
     // 1. Fetch site config
     const configDoc = await getDoc(doc(db, 'config', 'site'));
     if (configDoc.exists()) {
-      resultObj.siteConfig = configDoc.data()?.siteConfig || null;
+      const siteConfig = configDoc.data()?.siteConfig || null;
+      if (siteConfig) {
+        // Fetch institutions separately to bypass Firestore 1MB document size limit
+        const instDoc = await getDoc(doc(db, 'config', 'institutions'));
+        if (instDoc.exists()) {
+          siteConfig.institutions = instDoc.data()?.institutions || [];
+        } else {
+          siteConfig.institutions = siteConfig.institutions || [];
+        }
+      }
+      resultObj.siteConfig = siteConfig;
     }
 
     // 2. Fetch members

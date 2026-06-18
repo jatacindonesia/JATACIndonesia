@@ -91,7 +91,18 @@ export async function fetchSiteConfig(): Promise<any | null> {
     const dRef = doc(db, 'config', 'site');
     const snap = await getDoc(dRef);
     if (snap.exists()) {
-      return snap.data()?.siteConfig || null;
+      const siteConfig = snap.data()?.siteConfig || null;
+      if (siteConfig) {
+        // Fetch institutions separately to bypass Firestore 1MB document size limit
+        const instRef = doc(db, 'config', 'institutions');
+        const instSnap = await getDoc(instRef);
+        if (instSnap.exists()) {
+          siteConfig.institutions = instSnap.data()?.institutions || [];
+        } else {
+          siteConfig.institutions = siteConfig.institutions || [];
+        }
+      }
+      return siteConfig;
     }
     return null;
   } catch (e) {
@@ -103,8 +114,17 @@ export async function fetchSiteConfig(): Promise<any | null> {
 export async function saveSiteConfig(siteConfig: any): Promise<void> {
   const path = 'config/site';
   try {
+    const { institutions, ...restSiteConfig } = siteConfig || {};
+    
+    // Save rest of siteConfig
     const dRef = doc(db, 'config', 'site');
-    await setDoc(dRef, { siteConfig, lastUpdated: new Date().toISOString() }, { merge: true });
+    await setDoc(dRef, { siteConfig: restSiteConfig, lastUpdated: new Date().toISOString() }, { merge: true });
+    
+    // Save institutions separately
+    if (institutions !== undefined) {
+      const instRef = doc(db, 'config', 'institutions');
+      await setDoc(instRef, { institutions, lastUpdated: new Date().toISOString() }, { merge: true });
+    }
   } catch (e) {
     handleFirestoreError(e, OperationType.WRITE, path);
   }

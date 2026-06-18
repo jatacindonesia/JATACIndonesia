@@ -72,6 +72,54 @@ export function compressImage(file: File, maxWidth = 1200, maxHeight = 800, qual
   });
 }
 
+// Helper function to compress dataURL (base64) images directly if they are pasted/provided from text inputs
+export function compressDataUrl(dataUrl: string, maxWidth = 160, maxHeight = 100, quality = 0.5): Promise<string> {
+  if (!dataUrl || !dataUrl.startsWith('data:image/')) {
+    return Promise.resolve(dataUrl);
+  }
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(dataUrl);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+      try {
+        const result = canvas.toDataURL('image/jpeg', quality);
+        resolve(result);
+      } catch (e) {
+        resolve(dataUrl); // fallback if canvas throws (e.g. security error)
+      }
+    };
+    img.onerror = () => {
+      resolve(dataUrl);
+    };
+    img.src = dataUrl;
+  });
+}
+
 export default function AdminPanel({
   siteConfig,
   setSiteConfig,
@@ -382,58 +430,82 @@ export default function AdminPanel({
     };
     const newList = [...targetParticipants, newTp];
     setTargetParticipants(newList);
+    setSiteConfig({
+      ...siteConfig,
+      targetParticipants: newList
+    });
     setEditingTpId(newTp.id); // Open edit mode instantly for the new item!
   };
 
   const handleUpdateTargetParticipantText = (id: string, text: string) => {
     const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, text } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
     setTargetParticipants(newList);
+    setSiteConfig({
+      ...siteConfig,
+      targetParticipants: newList
+    });
   };
 
-  const handleUpdateTargetParticipantImage = (id: string, imageUrl: string) => {
-    const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
+  const handleUpdateTargetParticipantImage = async (id: string, imageUrl: string) => {
+    let finalUrl = imageUrl;
+    if (imageUrl && imageUrl.startsWith('data:image/')) {
+      finalUrl = await compressDataUrl(imageUrl, 160, 120, 0.5);
+    }
+    const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl: finalUrl } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
     setTargetParticipants(newList);
+    setSiteConfig({
+      ...siteConfig,
+      targetParticipants: newList
+    });
   };
 
   const handleDeleteTargetParticipant = (id: string) => {
     const newList = targetParticipants.filter(tp => tp && typeof tp === 'object' && 'id' in tp && tp.id !== id);
     setTargetParticipants(newList);
+    setSiteConfig({
+      ...siteConfig,
+      targetParticipants: newList
+    });
     if (editingTpId === id) setEditingTpId(null);
   };
 
   const handleTargetParticipantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await compressImage(file, 800, 600, 0.75);
+    const result = await compressImage(file, 160, 120, 0.5);
     const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl: result } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
     setTargetParticipants(newList);
+    setSiteConfig({
+      ...siteConfig,
+      targetParticipants: newList
+    });
   };
 
   const handleHeroBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await compressImage(file, 1200, 800, 0.65);
+    const result = await compressImage(file, 800, 600, 0.45);
     setBackgroundImageUrl(result);
   };
 
   const handleHeroBgUpload2 = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await compressImage(file, 1200, 800, 0.65);
+    const result = await compressImage(file, 800, 600, 0.45);
     setBackgroundImageUrl2(result);
   };
 
   const handleHeroBgUpload3 = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await compressImage(file, 1200, 800, 0.65);
+    const result = await compressImage(file, 800, 600, 0.45);
     setBackgroundImageUrl3(result);
   };
 
   const handleHeroBgUpload4 = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await compressImage(file, 1200, 800, 0.65);
+    const result = await compressImage(file, 800, 600, 0.45);
     setBackgroundImageUrl4(result);
   };
 
@@ -446,22 +518,42 @@ export default function AdminPanel({
     };
     const newList = [...institutions, newInst];
     setInstitutions(newList);
+    setSiteConfig({
+      ...siteConfig,
+      institutions: newList
+    });
     setEditingInstId(newInst.id); // Open edit mode instantly for the new institution!
   };
 
   const handleUpdateInstitutionName = (id: string, name: string) => {
     const newList = institutions.map(inst => inst.id === id ? { ...inst, name } : inst);
     setInstitutions(newList);
+    setSiteConfig({
+      ...siteConfig,
+      institutions: newList
+    });
   };
 
-  const handleUpdateInstitutionLogo = (id: string, logoUrl: string) => {
-    const newList = institutions.map(inst => inst.id === id ? { ...inst, logoUrl } : inst);
+  const handleUpdateInstitutionLogo = async (id: string, logoUrl: string) => {
+    let finalLogo = logoUrl;
+    if (logoUrl && logoUrl.startsWith('data:image/')) {
+      finalLogo = await compressDataUrl(logoUrl, 160, 100, 0.5);
+    }
+    const newList = institutions.map(inst => inst.id === id ? { ...inst, logoUrl: finalLogo } : inst);
     setInstitutions(newList);
+    setSiteConfig({
+      ...siteConfig,
+      institutions: newList
+    });
   };
 
   const handleDeleteInstitution = (id: string) => {
     const newList = institutions.filter(inst => inst.id !== id);
     setInstitutions(newList);
+    setSiteConfig({
+      ...siteConfig,
+      institutions: newList
+    });
     if (editingInstId === id) setEditingInstId(null);
   };
 
@@ -480,6 +572,13 @@ export default function AdminPanel({
     };
     const newList = [...historyList, newItem];
     setHistoryList(newList);
+    setSiteConfig({
+      ...siteConfig,
+      about: {
+        ...siteConfig.about,
+        history: newList
+      }
+    });
     setNewHistTitle('');
     setNewHistYear('');
     setNewHistDesc('');
@@ -489,18 +588,32 @@ export default function AdminPanel({
   const handleUpdateHistoryItem = (id: string, field: keyof JatcHistoryItem, value: any) => {
     const newList = historyList.map(item => item.id === id ? { ...item, [field]: value } : item);
     setHistoryList(newList);
+    setSiteConfig({
+      ...siteConfig,
+      about: {
+        ...siteConfig.about,
+        history: newList
+      }
+    });
   };
 
   const handleDeleteHistoryItem = (id: string) => {
     const newList = historyList.filter(item => item.id !== id);
     setHistoryList(newList);
+    setSiteConfig({
+      ...siteConfig,
+      about: {
+        ...siteConfig.about,
+        history: newList
+      }
+    });
     if (editingHistId === id) setEditingHistId(null);
   };
 
   const handleHistImgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await compressImage(file, 1000, 700, 0.75);
+    const result = await compressImage(file, 240, 160, 0.5);
     setNewHistImg(result);
   };
 
@@ -562,8 +675,13 @@ export default function AdminPanel({
   const handleInstitutionLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const result = await compressImage(file, 500, 300, 0.8);
-    setInstitutions(prev => prev.map(inst => inst.id === id ? { ...inst, logoUrl: result } : inst));
+    const result = await compressImage(file, 160, 100, 0.5);
+    const newList = institutions.map(inst => inst.id === id ? { ...inst, logoUrl: result } : inst);
+    setInstitutions(newList);
+    setSiteConfig({
+      ...siteConfig,
+      institutions: newList
+    });
   };
 
   // Helper to read file contents for articles / gallery / certificate
@@ -577,8 +695,10 @@ export default function AdminPanel({
     let result = '';
     if (type.startsWith('cert-')) {
       result = await compressImage(file, 450, 300, 0.85);
+    } else if (type.startsWith('gallery-') || type.startsWith('article-')) {
+      result = await compressImage(file, 640, 480, 0.5);
     } else {
-      result = await compressImage(file, 1000, 700, 0.75);
+      result = await compressImage(file, 1000, 705, 0.75);
     }
 
     if (type === 'article-new') {
