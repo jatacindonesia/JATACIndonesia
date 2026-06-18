@@ -109,12 +109,25 @@
         "fileUrl": { "type": "string" }
       },
       "required": ["id", "title", "type", "fileUrl"]
+    },
+    "institutionsConfig": {
+      "title": "Institutions Configuration",
+      "description": "List of partner institutions for JATC",
+      "type": "object",
+      "properties": {
+        "institutions": { "type": "array" }
+      },
+      "required": ["institutions"]
     }
   },
   "firestore": {
     "/config/site": {
       "schema": "siteConfig",
       "description": "Single document containing JATC homepage text, hero assets, contact address"
+    },
+    "/config/institutions": {
+      "schema": "institutionsConfig",
+      "description": "Separated collection to store partner institutions to bypass document size limits"
     },
     "/members/{memberId}": {
       "schema": "member",
