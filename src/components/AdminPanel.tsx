@@ -268,6 +268,7 @@ export default function AdminPanel({
   const [newSessIsCertIssued, setNewSessIsCertIssued] = useState(false);
   const [newSessIsWebinarSeq, setNewSessIsWebinarSeq] = useState(false);
   const [newSessWebinarSeqLabel, setNewSessWebinarSeqLabel] = useState('Webinar ke-2');
+  const [newSessCategoryInfo, setNewSessCategoryInfo] = useState('');
 
   // Editing state for Sessions
   const [editingSession, setEditingSession] = useState<LearningSession | null>(null);
@@ -748,7 +749,8 @@ export default function AdminPanel({
       status: 'Aktif',
       isCertificateIssued: newSessIsCertIssued,
       isWebinarSequence: newSessIsWebinarSeq,
-      webinarSequenceLabel: newSessIsWebinarSeq ? newSessWebinarSeqLabel : undefined
+      webinarSequenceLabel: newSessIsWebinarSeq ? newSessWebinarSeqLabel : undefined,
+      categoryInfo: newSessCategoryInfo
     };
     setSessions([...sessions, newSess]);
     setNewSessTitle('');
@@ -756,6 +758,7 @@ export default function AdminPanel({
     setNewSessIsCertIssued(false);
     setNewSessIsWebinarSeq(false);
     setNewSessWebinarSeqLabel('Webinar ke-2');
+    setNewSessCategoryInfo('');
     alert('Sesi Jadwal Learning baru berhasil ditambahkan!');
   };
 
@@ -3474,8 +3477,8 @@ export default function AdminPanel({
                       }`}>
                         {isEditing ? (
                           /* Inline Editing Form */
-                          <div className="flex-1 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-3 text-xs w-full font-sans">
-                            <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-2.5 text-left font-sans">
+                          <div className="flex-1 text-xs w-full font-sans text-left space-y-3.5">
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-2.5 font-sans">
                               <div>
                                 <label className="block text-[8px] font-bold text-amber-800 uppercase font-mono mb-0.5">Nama Sesi:</label>
                                 <input
@@ -3544,7 +3547,18 @@ export default function AdminPanel({
                                 </div>
                               </div>
                             </div>
-                            <div className="flex justify-end gap-1.5 shrink-0 pt-2 sm:pt-4">
+                            <div className="bg-white/80 p-2 rounded-lg border border-neutral-200">
+                              <label className="block text-[9px] font-bold text-amber-800 uppercase font-mono mb-0.5">
+                                Kolom Informasi Khusus (Rujukan Informasi Sesi/Kelas Tampil di Dashboard Anggota):
+                              </label>
+                              <textarea
+                                value={editingSession.categoryInfo || ''}
+                                onChange={e => setEditingSession({...editingSession, categoryInfo: e.target.value})}
+                                placeholder="Tulis instruksi khusus rujukan admin, arahan materi khusus, link grup WhatsApp, kontak operasional, dll. informasi ini langsung tersinkron dan tampil di akses login anggota."
+                                className="w-full rounded bg-white border border-neutral-300 p-1.5 text-xs font-sans h-16 resize-y outline-none focus:border-[#a18241]"
+                              />
+                            </div>
+                            <div className="flex justify-end gap-1.5 pt-1">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -3556,14 +3570,14 @@ export default function AdminPanel({
                                   setEditingSession(null);
                                   alert('Sesi berhasil diperbarui!');
                                 }}
-                                className="px-2.5 py-1.5 bg-green-700 text-white rounded-lg text-[10px] font-bold hover:bg-green-800 transition-all cursor-pointer"
+                                className="px-3 py-1.5 bg-green-700 text-white rounded-lg text-[10px] font-bold hover:bg-green-800 transition-all cursor-pointer shadow-sm"
                               >
                                 Simpan
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setEditingSession(null)}
-                                className="px-2.5 py-1.5 bg-neutral-200 text-neutral-700 rounded-lg text-[10px] hover:bg-neutral-300 transition-all cursor-pointer"
+                                className="px-3 py-1.5 bg-neutral-200 text-neutral-700 rounded-lg text-[10px] hover:bg-neutral-300 transition-all cursor-pointer"
                               >
                                 Batal
                               </button>
@@ -3572,7 +3586,7 @@ export default function AdminPanel({
                         ) : (
                           /* Standard Row Display */
                           <>
-                            <div className="space-y-0.5 text-left flex-1">
+                            <div className="space-y-0.5 text-left flex-1 w-full">
                               <div className="font-bold text-xs text-brand-blue flex flex-wrap items-center gap-2">
                                 <span>{sess.title}</span>
                                 {sess.isCertificateIssued ? (
@@ -3588,6 +3602,16 @@ export default function AdminPanel({
                               <div className="text-[10px] text-gray-500 font-sans">
                                 Jadwal: <strong className="text-neutral-700">{sess.dateTime}</strong> • Pengampu Master: <strong className="text-brand-gold">{sess.instructor}</strong>
                               </div>
+                              {sess.categoryInfo ? (
+                                <div className="text-[10px] text-amber-900 bg-amber-50/60 rounded border border-amber-200 p-1.5 mt-1.5 font-sans max-w-2xl leading-relaxed">
+                                  <span className="font-bold text-[8.5px] uppercase font-mono block text-amber-800 mb-0.5">ℹ️ Informasi Rujukan dari Admin:</span>
+                                  {sess.categoryInfo}
+                                </div>
+                              ) : (
+                                <div className="text-[9px] text-amber-700/70 italic mt-1.5">
+                                  💡 Belum ada kolom informasi khusus yang disematkan untuk pendaftar kategori kelas ini. Klik tombol Sunting di samping untuk menambahkan rujukan informasi.
+                                </div>
+                              )}
                             </div>
                             <div className="flex flex-wrap items-center gap-1.5 mt-2 sm:mt-0 justify-end">
                               {/* Quick toggle check for Terbit Sertifikat */}
@@ -3735,6 +3759,19 @@ export default function AdminPanel({
                       </div>
                     </div>
                   )}
+
+                  <div className="bg-amber-50/40 p-3 rounded-lg border border-neutral-150 text-left">
+                    <label className="block text-[10px] font-bold text-amber-900 uppercase font-mono mb-1">
+                      Informasi Khusus Terkait Kategori Kelas / Sesi ini (Tampil untuk Anggota) :
+                    </label>
+                    <textarea
+                      value={newSessCategoryInfo}
+                      onChange={(e) => setNewSessCategoryInfo(e.target.value)}
+                      placeholder="Tulis informasi rujukan admin, panduan pembelajaran, link WhatsApp Group, instruksi khusus, atau rujukan penting lainnya yang akan langsung tampil di dashboard saat anggota login jika mereka memilih kategori kelas ini..."
+                      className="w-full rounded bg-white border border-neutral-200 p-2 text-xs font-sans h-16 resize-y outline-none focus:border-[#a18241]"
+                    />
+                  </div>
+
                   <button
                     type="submit"
                     className="inline-flex items-center gap-1 px-3 py-1.5 bg-brand-blue text-white rounded text-xs font-sans font-bold cursor-pointer hover:bg-brand-blue/90 shadow"

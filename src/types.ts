@@ -97,6 +97,7 @@ export interface LearningSession {
   isCertificateIssued?: boolean;
   isWebinarSequence?: boolean;
   webinarSequenceLabel?: string;
+  categoryInfo?: string;
 }
 
 export interface Article {

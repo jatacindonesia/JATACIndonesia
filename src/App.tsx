@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Globe, Briefcase, BookOpen, Award, Phone, Mail, MapPin, Clock, User, LogIn, Lock, Settings,
   Layers, MessageSquare, Calendar, ChevronRight, ChevronLeft, Sparkles, Plus, Menu, X, GraduationCap, CheckCircle,
-  FileText, ArrowUpRight, HelpCircle, Activity, Heart, Bookmark, Database, Printer, Video, ExternalLink, ShieldCheck
+  FileText, ArrowUpRight, HelpCircle, Activity, Heart, Bookmark, Database, Printer, Video, ExternalLink, ShieldCheck, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -2224,11 +2224,54 @@ export default function App() {
                                 <span className="text-[#a18241] block font-mono text-[9px] uppercase font-bold">Kategori Sesi Dipilih:</span>
                                 <span className="text-brand-blue font-bold text-[11px] leading-normal block">{loggedInMember.selectedSession}</span>
                               </div>
+
+                              {(() => {
+                                const matchingSession = sessions.find(s => s.title === loggedInMember.selectedSession);
+                                if (!matchingSession) return null;
+                                return (
+                                  <div className="bg-amber-50/80 border border-amber-300 rounded-xl p-3.5 space-y-2 mt-3 animate-fadeIn text-left">
+                                    <div className="flex items-center gap-1.5 text-[#a18241] border-b border-amber-200 pb-1.5">
+                                      <Info className="w-4 h-4 shrink-0" />
+                                      <span className="font-serif text-[11px] font-bold uppercase tracking-wide">Pemberitahuan Sesi</span>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <span className="text-[8px] text-gray-400 font-mono uppercase block">Rujukan Kelas:</span>
+                                      <span className="text-[#0b2240] font-bold text-[10px] leading-tight block">{matchingSession.title}</span>
+                                    </div>
+                                    <div className="text-[11px] text-neutral-700 leading-relaxed font-sans bg-white/60 rounded-lg p-2.5 border border-amber-200/50 whitespace-pre-line">
+                                      {matchingSession.categoryInfo ? (
+                                        matchingSession.categoryInfo
+                                      ) : (
+                                        <span className="text-gray-400 italic text-[10px]">Belum ada informasi khusus dari Admin saat ini untuk kategori kelas ini.</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
 
                           {/* Certificate Rendering Area */}
                           <div className="md:col-span-2 space-y-4">
+                            {(() => {
+                              const matchingSession = sessions.find(s => s.title === loggedInMember.selectedSession);
+                              if (!matchingSession || !matchingSession.categoryInfo) return null;
+                              return (
+                                <div className="border bg-amber-50/50 border-amber-300/80 rounded-2xl p-5 space-y-3 animate-fadeIn text-left shadow-sm">
+                                  <h4 className="font-serif text-sm font-bold text-amber-950 flex items-center gap-2 border-b border-amber-200 pb-2">
+                                    <Info className="w-4 h-4 text-[#a18241] shrink-0" />
+                                    Kolom Informasi Penting - {matchingSession.title}
+                                  </h4>
+                                  <p className="text-[10px] font-mono text-amber-800/80 block uppercase tracking-wider">
+                                    Pemberitahuan Resmi Dari Admin JATC Untuk Anggota:
+                                  </p>
+                                  <div className="text-xs text-neutral-800 leading-relaxed font-sans bg-white border border-amber-200/50 p-4 rounded-xl shadow-inner whitespace-pre-line">
+                                    {matchingSession.categoryInfo}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
                             <div className="border bg-zinc-50 border-neutral-200 rounded-2xl p-5 space-y-4">
                               <h4 className="font-serif text-sm font-bold text-brand-blue border-b pb-2 flex items-center gap-1.5">
                                 <Award className="w-4 h-4 text-brand-gold shrink-0" />
