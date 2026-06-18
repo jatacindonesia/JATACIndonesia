@@ -177,7 +177,7 @@ export default function App() {
   // Cloud write wrapper functions that do instant, bulletproof persistence
   const handleSiteConfigChange = async (next: SiteConfig) => {
     setSiteConfig(next);
-    localStorage.setItem('jatc_site_config', JSON.stringify(next));
+    saveToLocalStorage('jatc_site_config', next);
     try {
       const { institutions, ...restSiteConfig } = next || {};
       await setDoc(doc(db, 'config', 'site'), { siteConfig: restSiteConfig, lastUpdated: new Date().toISOString() }, { merge: true });
@@ -191,7 +191,7 @@ export default function App() {
 
   const handleMembersChange = async (next: Member[]) => {
     setMembers(next);
-    localStorage.setItem('jatc_members', JSON.stringify(next));
+    saveToLocalStorage('jatc_members', next);
     try {
       const currentList = prevMembersRef.current || [];
       const deleted = currentList.filter(x => !next.some(y => y.id === x.id));
@@ -208,7 +208,7 @@ export default function App() {
 
   const handleSessionsChange = async (next: LearningSession[]) => {
     setSessions(next);
-    localStorage.setItem('jatc_sessions', JSON.stringify(next));
+    saveToLocalStorage('jatc_sessions', next);
     try {
       const currentList = prevSessionsRef.current || [];
       const deleted = currentList.filter(x => !next.some(y => y.id === x.id));
@@ -225,7 +225,7 @@ export default function App() {
 
   const handleArticlesChange = async (next: Article[]) => {
     setArticles(next);
-    localStorage.setItem('jatc_articles', JSON.stringify(next));
+    saveToLocalStorage('jatc_articles', next);
     try {
       const currentList = prevArticlesRef.current || [];
       const deleted = currentList.filter(x => !next.some(y => y.id === x.id));
@@ -242,7 +242,7 @@ export default function App() {
 
   const handleGalleryChange = async (next: GalleryItem[]) => {
     setGallery(next);
-    localStorage.setItem('jatc_gallery', JSON.stringify(next));
+    saveToLocalStorage('jatc_gallery', next);
     try {
       const currentList = prevGalleryRef.current || [];
       const deleted = currentList.filter(x => !next.some(y => y.id === x.id));
@@ -259,7 +259,7 @@ export default function App() {
 
   const handleLmsModulesChange = async (next: LMSModule[]) => {
     setLmsModules(next);
-    localStorage.setItem('jatc_lms_modules', JSON.stringify(next));
+    saveToLocalStorage('jatc_lms_modules', next);
     try {
       const currentList = prevLmsModulesRef.current || [];
       const deleted = currentList.filter(x => !next.some(y => y.id === x.id));
@@ -546,34 +546,42 @@ export default function App() {
 
   // Synchronous local storage update immediately on any state change
   useEffect(() => {
-    localStorage.setItem('jatc_site_config', JSON.stringify(siteConfig));
+    saveToLocalStorage('jatc_site_config', siteConfig);
   }, [siteConfig]);
 
   useEffect(() => {
-    localStorage.setItem('jatc_members', JSON.stringify(members));
+    saveToLocalStorage('jatc_members', members);
   }, [members]);
 
   useEffect(() => {
-    localStorage.setItem('jatc_sessions', JSON.stringify(sessions));
+    saveToLocalStorage('jatc_sessions', sessions);
   }, [sessions]);
 
   useEffect(() => {
-    localStorage.setItem('jatc_articles', JSON.stringify(articles));
+    saveToLocalStorage('jatc_articles', articles);
   }, [articles]);
 
   useEffect(() => {
-    localStorage.setItem('jatc_gallery', JSON.stringify(gallery));
+    saveToLocalStorage('jatc_gallery', gallery);
   }, [gallery]);
 
   useEffect(() => {
-    localStorage.setItem('jatc_lms_modules', JSON.stringify(lmsModules));
+    saveToLocalStorage('jatc_lms_modules', lmsModules);
   }, [lmsModules]);
 
   useEffect(() => {
     if (loggedInMember) {
-      localStorage.setItem('jatc_logged_member', JSON.stringify(loggedInMember));
+      try {
+        localStorage.setItem('jatc_logged_member', JSON.stringify(loggedInMember));
+      } catch (err) {
+        console.warn("Failed to save loggedInMember to localStorage:", err);
+      }
     } else {
-      localStorage.removeItem('jatc_logged_member');
+      try {
+        localStorage.removeItem('jatc_logged_member');
+      } catch (err) {
+        console.warn("Failed to remove loggedInMember from localStorage:", err);
+      }
     }
   }, [loggedInMember]);
 

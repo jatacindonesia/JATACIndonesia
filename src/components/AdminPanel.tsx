@@ -440,10 +440,6 @@ export default function AdminPanel({
   const handleUpdateTargetParticipantText = (id: string, text: string) => {
     const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, text } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
     setTargetParticipants(newList);
-    setSiteConfig({
-      ...siteConfig,
-      targetParticipants: newList
-    });
   };
 
   const handleUpdateTargetParticipantImage = async (id: string, imageUrl: string) => {
@@ -453,10 +449,6 @@ export default function AdminPanel({
     }
     const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl: finalUrl } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
     setTargetParticipants(newList);
-    setSiteConfig({
-      ...siteConfig,
-      targetParticipants: newList
-    });
   };
 
   const handleDeleteTargetParticipant = (id: string) => {
@@ -475,10 +467,6 @@ export default function AdminPanel({
     const result = await compressImage(file, 160, 120, 0.5);
     const newList = targetParticipants.map(tp => tp && typeof tp === 'object' && 'id' in tp ? (tp.id === id ? { ...tp, imageUrl: result } : tp) : { id: `tp-${Math.random()}`, text: String(tp) });
     setTargetParticipants(newList);
-    setSiteConfig({
-      ...siteConfig,
-      targetParticipants: newList
-    });
   };
 
   const handleHeroBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -528,10 +516,6 @@ export default function AdminPanel({
   const handleUpdateInstitutionName = (id: string, name: string) => {
     const newList = institutions.map(inst => inst.id === id ? { ...inst, name } : inst);
     setInstitutions(newList);
-    setSiteConfig({
-      ...siteConfig,
-      institutions: newList
-    });
   };
 
   const handleUpdateInstitutionLogo = async (id: string, logoUrl: string) => {
@@ -541,10 +525,6 @@ export default function AdminPanel({
     }
     const newList = institutions.map(inst => inst.id === id ? { ...inst, logoUrl: finalLogo } : inst);
     setInstitutions(newList);
-    setSiteConfig({
-      ...siteConfig,
-      institutions: newList
-    });
   };
 
   const handleDeleteInstitution = (id: string) => {
@@ -588,13 +568,6 @@ export default function AdminPanel({
   const handleUpdateHistoryItem = (id: string, field: keyof JatcHistoryItem, value: any) => {
     const newList = historyList.map(item => item.id === id ? { ...item, [field]: value } : item);
     setHistoryList(newList);
-    setSiteConfig({
-      ...siteConfig,
-      about: {
-        ...siteConfig.about,
-        history: newList
-      }
-    });
   };
 
   const handleDeleteHistoryItem = (id: string) => {
@@ -678,10 +651,6 @@ export default function AdminPanel({
     const result = await compressImage(file, 160, 100, 0.5);
     const newList = institutions.map(inst => inst.id === id ? { ...inst, logoUrl: result } : inst);
     setInstitutions(newList);
-    setSiteConfig({
-      ...siteConfig,
-      institutions: newList
-    });
   };
 
   // Helper to read file contents for articles / gallery / certificate
@@ -2126,7 +2095,13 @@ export default function AdminPanel({
                                     <div className="flex justify-end pt-1">
                                       <button
                                         type="button"
-                                        onClick={() => setEditingTpId(null)}
+                                        onClick={() => {
+                                          setEditingTpId(null);
+                                          setSiteConfig({
+                                            ...siteConfig,
+                                            targetParticipants: targetParticipants
+                                          });
+                                        }}
                                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-[9px] px-2.5 py-1 rounded shadow-sm flex items-center gap-1 cursor-pointer"
                                       >
                                         Selesai Edit
@@ -2290,7 +2265,13 @@ export default function AdminPanel({
                                     <div className="flex justify-end pt-1">
                                       <button
                                         type="button"
-                                        onClick={() => setEditingInstId(null)}
+                                        onClick={() => {
+                                          setEditingInstId(null);
+                                          setSiteConfig({
+                                            ...siteConfig,
+                                            institutions: institutions
+                                          });
+                                        }}
                                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-[8.5px] px-2 py-0.5 rounded shadow-sm flex items-center gap-1 cursor-pointer"
                                       >
                                         Selesai
@@ -2560,7 +2541,16 @@ export default function AdminPanel({
                                       <div className="sm:col-span-3 flex justify-end">
                                         <button
                                           type="button"
-                                          onClick={() => setEditingHistId(null)}
+                                          onClick={() => {
+                                            setEditingHistId(null);
+                                            setSiteConfig({
+                                              ...siteConfig,
+                                              about: {
+                                                ...siteConfig.about,
+                                                history: historyList
+                                              }
+                                            });
+                                          }}
                                           className="bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-[8.5px] px-2.5 py-1 rounded shadow-sm"
                                         >
                                           Selesai Edit
